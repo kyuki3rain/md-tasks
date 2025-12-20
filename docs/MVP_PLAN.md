@@ -52,57 +52,62 @@ src/
 
 ## 実装フェーズ
 
-### Phase 1: 基盤構築
+### Phase 1: 基盤構築 ✅
 
 **目標**: 開発環境とアーキテクチャの基盤を整備する
 
 #### 1.1 開発環境のセットアップ
 
-- [ ] pnpmでの依存関係管理を確認
-- [ ] Biomeの導入（ESLint/Prettierから移行）
-- [ ] Vitestの導入
-- [ ] tsconfig.jsonのstrict mode有効化
+- [x] pnpmでの依存関係管理を確認
+- [x] Biomeの導入（ESLint/Prettierから移行）
+- [x] Vitestの導入
+- [x] tsconfig.jsonのstrict mode有効化
 
 #### 1.2 プロジェクト構造の整備
 
-- [ ] ディレクトリ構造の作成（domain, application, interface, infrastructure, bootstrap, shared, webview）
-- [ ] 共有ユーティリティの設置（logger等）
-- [ ] neverthrowの導入（Result型）
-- [ ] Zodの導入（バリデーション）
-- [ ] tslogの導入（ロギング）
+- [x] ディレクトリ構造の作成（domain, application, interface, infrastructure, bootstrap, shared, webview）
+- [x] 共有ユーティリティの設置（logger等）
+- [x] neverthrowの導入（Result型）
+- [x] Zodの導入（バリデーション）
+- [x] カスタムLoggerの実装（VSCode OutputChannel統合）
 
 #### 1.3 WebView環境の構築
 
-- [ ] Viteプロジェクトの作成（webview/配下）
-- [ ] Reactの設定
-- [ ] Tailwind CSS v3の設定
-- [ ] shadcn/uiの導入
-- [ ] Extension ⇔ WebView通信の基盤実装
+- [x] Viteプロジェクトの作成（webview/配下）
+- [x] Reactの設定
+- [x] Tailwind CSS v4の設定
+- [x] shadcn/uiの導入
+- [x] Extension ⇔ WebView通信の基盤実装
 
 ---
 
-### Phase 2: ドメイン層の実装
+### Phase 2: ドメイン層の実装 ✅
 
 **目標**: ビジネスロジックの中核をTDDで実装する
 
 #### 2.1 エンティティ・値オブジェクト
 
-- [ ] `Task` エンティティの定義
-  - id, title, status, path, checkbox状態, メタデータ
-- [ ] `Path` 値オブジェクトの定義
-  - 見出し階層を表現
-- [ ] `Status` 値オブジェクトの定義
+- [x] `Task` エンティティの定義
+  - id, title, status, path, checkbox状態, lineNumber, メタデータ
+- [x] `Path` 値オブジェクトの定義
+  - 見出し階層を表現、親子関係、プレフィックス判定
+- [x] `Status` 値オブジェクトの定義
+  - バリデーション、完了判定
 
 #### 2.2 ドメインエラー
 
-- [ ] `TaskParseError` の定義
-- [ ] `InvalidStatusError` の定義
-- [ ] `TaskNotFoundError` の定義
+- [x] `TaskParseError` の定義
+- [x] `InvalidStatusError` の定義
+- [x] `TaskNotFoundError` の定義
 
 #### 2.3 ポートインターフェース
 
-- [ ] `TaskRepository` ポートの定義（CRUD操作）
-- [ ] `ConfigProvider` ポートの定義（設定取得）
+- [x] `TaskRepository` ポートの定義（CRUD操作）
+- [x] `ConfigProvider` ポートの定義（設定取得、KanbanConfig型）
+
+#### 2.4 テスト
+
+- [x] 57件のユニットテストを実装（Status, Path, Task）
 
 ---
 
@@ -118,12 +123,26 @@ src/
 - [ ] 引用・コードブロック内の除外
 - [ ] フロントマターのパース
 
-#### 3.2 シリアライザー実装
+#### 3.2 タスクID生成・重複検出
 
-- [ ] タスクの変更をMarkdownに反映
+- [ ] タスクID生成（パス + タイトル）
+- [ ] 重複タスク検出
+- [ ] 重複時のWarning生成
+
+#### 3.3 シリアライザー実装（部分編集）
+
+- [ ] 操作の都度、最新Markdownを再パース
+- [ ] パス + タイトルでタスクノードを特定
+- [ ] 該当箇所のみを編集（WorkspaceEdit API）
 - [ ] ステータス変更時のチェックボックス連動
-- [ ] 新規タスクの挿入
+- [ ] 新規タスクの挿入（パス配下の末尾）
 - [ ] タスクの削除
+
+#### 3.4 設計方針
+
+- ASTは保持しない（操作の都度パース）
+- 元のMarkdown構造を保持（タスク以外の部分は変更しない）
+- 外部編集との競合は「Last Write Wins」で解決
 
 ---
 
@@ -308,9 +327,10 @@ vscode.postMessage({ type: 'UPDATE_TASK', payload: { id, status } });
 
 ## 次のステップ
 
-1. Phase 1の開発環境セットアップから開始
-2. TDDでドメイン層を実装
-3. 各フェーズ完了後にレビュー・調整
+1. ~~Phase 1の開発環境セットアップから開始~~ ✅
+2. ~~TDDでドメイン層を実装~~ ✅
+3. Phase 3: Markdownパーサーの実装
+4. 各フェーズ完了後にレビュー・調整
 
 ---
 
@@ -326,3 +346,4 @@ vscode.postMessage({ type: 'UPDATE_TASK', payload: { id, status } });
 | 日付 | 内容 |
 |------|------|
 | 2025-01-XX | 初版作成 |
+| 2025-01-XX | Phase 1, 2 完了。Phase 3 詳細化（タスクID生成、重複検出、部分編集方針） |

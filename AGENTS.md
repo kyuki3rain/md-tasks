@@ -155,8 +155,8 @@ src/
 ## 現在のステータス
 
 - **バージョン**: 0.0.1（開発中）
-- **状態**: Phase 1（基盤構築）完了
-- **次のステップ**: Phase 2（ドメイン層の実装）へ
+- **状態**: Phase 2（ドメイン層の実装）完了
+- **次のステップ**: Phase 3（Markdownパーサーの実装）へ
 
 ### 完了済みフェーズ
 
@@ -165,6 +165,13 @@ src/
   - プロジェクト構造整備（クリーンアーキテクチャ）
   - 共有ユーティリティ（Logger, neverthrow, Zod）
   - WebView環境構築（Vite, React, Tailwind CSS v4, shadcn/ui）
+
+- ✅ Phase 2: ドメイン層の実装
+  - 値オブジェクト: Status, Path
+  - エンティティ: Task
+  - ドメインエラー: InvalidStatusError, TaskParseError, TaskNotFoundError
+  - ポート: TaskRepository, ConfigProvider
+  - 57件のユニットテスト
 
 ---
 

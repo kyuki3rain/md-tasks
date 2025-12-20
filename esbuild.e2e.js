@@ -1,11 +1,11 @@
 const esbuild = require("esbuild");
-const glob = require("glob");
+const fs = require("node:fs");
 
 const watch = process.argv.includes('--watch');
 
 async function main() {
-	// テストファイルを検索
-	const testFiles = glob.sync('src/test/**/*.test.ts');
+	// テストファイルを検索（Node.js 22+ のネイティブglob）
+	const testFiles = fs.globSync('src/test/**/*.test.ts');
 
 	const ctx = await esbuild.context({
 		entryPoints: testFiles,

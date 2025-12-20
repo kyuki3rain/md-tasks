@@ -46,6 +46,65 @@
 
 ---
 
+## 開発コマンド
+
+### 基本コマンド
+
+```bash
+# 依存関係のインストール
+pnpm install
+
+# ビルド（型チェック + Lint + コンパイル）
+pnpm run compile
+
+# 型チェックのみ
+pnpm run check-types
+
+# Lint
+pnpm run lint
+
+# Lint（自動修正）
+pnpm run lint:fix
+
+# フォーマット
+pnpm run format
+```
+
+### テスト
+
+```bash
+# テスト実行
+pnpm run test
+
+# テスト（ウォッチモード）
+pnpm run test:watch
+
+# テスト（カバレッジ付き）
+pnpm run test:coverage
+
+# E2Eテスト
+pnpm run test:e2e
+```
+
+### 開発モード
+
+```bash
+# ウォッチモード（Extension + WebView）
+pnpm run watch
+
+# WebViewのみ開発サーバー
+cd src/webview && pnpm run dev
+```
+
+### パッケージング
+
+```bash
+# 本番ビルド
+pnpm run package
+```
+
+---
+
 ## アーキテクチャ
 
 クリーンアーキテクチャを採用。依存関係は内側から外側への一方向のみ許可。
@@ -96,8 +155,16 @@ src/
 ## 現在のステータス
 
 - **バージョン**: 0.0.1（開発中）
-- **状態**: サンプルコード状態、MVP実装開始前
-- **次のステップ**: Phase 1（基盤構築）から開始
+- **状態**: Phase 1（基盤構築）完了
+- **次のステップ**: Phase 2（ドメイン層の実装）へ
+
+### 完了済みフェーズ
+
+- ✅ Phase 1: 基盤構築
+  - 開発環境セットアップ（pnpm, Biome, Vitest, TypeScript strict mode）
+  - プロジェクト構造整備（クリーンアーキテクチャ）
+  - 共有ユーティリティ（Logger, neverthrow, Zod）
+  - WebView環境構築（Vite, React, Tailwind CSS v4, shadcn/ui）
 
 ---
 

@@ -2,4 +2,3 @@
 
 export * from './adapters';
 export * from './clients';
-export * from './parsers';

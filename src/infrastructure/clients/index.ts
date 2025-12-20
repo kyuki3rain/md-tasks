@@ -1,2 +1,2 @@
 // Infrastructure Clients
-export {};
+export { type FrontmatterResult, RemarkClient } from './remarkClient';

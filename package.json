@@ -28,9 +28,10 @@
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
     "watch:webview": "cd src/webview && pnpm run dev",
     "package": "pnpm run check-types && pnpm run lint && node esbuild.js --production && pnpm run compile:webview",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
+    "compile-tests": "tsc -p tsconfig.e2e.json",
+    "watch-tests": "tsc -p tsconfig.e2e.json -w",
+    "pretest": "pnpm run check-types && pnpm run lint",
+    "pretest:e2e": "pnpm run compile-tests && pnpm run compile",
     "check-types": "tsc --noEmit",
     "lint": "biome check src",
     "lint:fix": "biome check --write src",
@@ -38,7 +39,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "vscode-test"
+    "test:e2e": "pnpm run pretest:e2e && vscode-test"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.10",

@@ -112,13 +112,30 @@ pnpm run package
 ```
 src/
 ├── domain/           # ドメイン層（ビジネスルールの中核）
+│   └── ports/        # Port（インターフェース定義）
 ├── application/      # アプリケーション層（ユースケース）
+│   └── ports/        # Port（インターフェース定義）
 ├── interface/        # インターフェース層（外部リクエスト受付）
+│   ├── adapters/     # Adapter（Portの実装）
+│   └── clients/      # Client（WebView通信等）
 ├── infrastructure/   # インフラストラクチャ層（外部システム連携）
+│   ├── adapters/     # Adapter（Portの実装）
+│   └── clients/      # Client（remark, VSCode API等のラッパー）
 ├── bootstrap/        # ブートストラップ層（エントリーポイント、DI）
 ├── shared/           # 共有ユーティリティ
 └── webview/          # WebView（React、別構成）
 ```
+
+### Port / Adapter / Client
+
+| 用語 | 意味 | 配置場所 |
+|------|------|----------|
+| **Port** | インターフェース（契約） | Domain層 / Application層 |
+| **Adapter** | Portの実装 | Interface層 / Infrastructure層 |
+| **Client** | 外部システムのラッパー | Interface層 / Infrastructure層 |
+
+- **Client**: 外部システムごとに1つ（AdapterはClientに依存することもある）
+- **Adapter**: Portごとに1つ
 
 詳細は [docs/CONSTITUTION.md](./docs/CONSTITUTION.md) を参照。
 

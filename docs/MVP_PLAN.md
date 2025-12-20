@@ -169,16 +169,17 @@ src/
 
 **目標**: 外部システム（VSCode API、ファイルシステム）との連携を実装
 
-#### 5.1 ポート実装
+#### 5.1 Client実装（外部システムラッパー）
 
-- [ ] `MarkdownTaskRepository` - Markdownファイルからのタスク操作
-- [ ] `VscodeConfigProvider` - VSCode設定の取得
-- [ ] `FrontmatterConfigProvider` - フロントマターからの設定取得
-
-#### 5.2 クライアント実装
-
+- [ ] `RemarkClient` - remark/AST操作のラッパー
 - [ ] `VscodeDocumentClient` - VSCodeドキュメント操作
-- [ ] `WorkspaceEditClient` - WorkspaceEdit API操作
+- [ ] `VscodeWorkspaceClient` - WorkspaceEdit API操作
+
+#### 5.2 Adapter実装（Portの実装）
+
+- [ ] `MarkdownTaskRepository` - TaskRepositoryの実装（RemarkClientを使用）
+- [ ] `VscodeConfigProvider` - ConfigProviderの実装（VSCode設定）
+- [ ] `FrontmatterConfigProvider` - ConfigProviderの実装（フロントマター）
 
 ---
 
@@ -186,15 +187,15 @@ src/
 
 **目標**: 外部からのリクエストを受け付け、ユースケースを呼び出す
 
-#### 6.1 ポート実装
+#### 6.1 Client実装（外部通信）
+
+- [ ] `WebViewMessageClient` - WebViewへのメッセージ送受信
+
+#### 6.2 Adapter実装（Portの実装）
 
 - [ ] `TaskController` - タスク操作のエントリーポイント
 - [ ] `ConfigController` - 設定操作のエントリーポイント
-
-#### 6.2 WebView通信クライアント
-
-- [ ] `WebViewMessageDispatcher` - WebViewへのメッセージ送信
-- [ ] `WebViewMessageHandler` - WebViewからのメッセージ受信
+- [ ] `WebViewMessageHandler` - WebViewからのメッセージハンドリング
 
 ---
 

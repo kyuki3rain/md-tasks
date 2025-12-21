@@ -1,2 +1,2 @@
 // Dependency Injection Container
-export {};
+export { Container, disposeContainer, getContainer } from './container';

@@ -1,25 +1,54 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import { disposeContainer, getContainer, KanbanPanelProvider } from './bootstrap';
+import { logger } from './shared';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "markdown-kanban" is now active!');
+// パネルプロバイダーのインスタンス
+let kanbanPanelProvider: KanbanPanelProvider | undefined;
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('markdown-kanban.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from markdown-kanban!');
+/**
+ * 拡張機能がアクティブになった時に呼ばれる
+ */
+export function activate(context: vscode.ExtensionContext): void {
+	logger.info('Markdown Kanban extension is activating...');
+
+	// DIコンテナを初期化
+	const container = getContainer();
+
+	// KanbanPanelProviderを作成
+	kanbanPanelProvider = new KanbanPanelProvider(context.extensionUri, container);
+
+	// コマンドを登録: カンバンボードを開く
+	const openBoardCommand = vscode.commands.registerCommand('markdownKanban.openBoard', () => {
+		logger.info('Opening Kanban board...');
+		kanbanPanelProvider?.showOrCreate();
 	});
+	context.subscriptions.push(openBoardCommand);
 
-	context.subscriptions.push(disposable);
+	// エディタのタイトルバーアクション（Markdownファイルでのみ表示）
+	const editorTitleCommand = vscode.commands.registerCommand(
+		'markdownKanban.openBoardFromEditor',
+		() => {
+			logger.info('Opening Kanban board from editor title...');
+			kanbanPanelProvider?.showOrCreate();
+		},
+	);
+	context.subscriptions.push(editorTitleCommand);
+
+	logger.info('Markdown Kanban extension activated successfully');
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {}
+/**
+ * 拡張機能が非アクティブになった時に呼ばれる
+ */
+export function deactivate(): void {
+	logger.info('Markdown Kanban extension is deactivating...');
+
+	// パネルプロバイダーを破棄
+	kanbanPanelProvider?.dispose();
+	kanbanPanelProvider = undefined;
+
+	// DIコンテナを破棄
+	disposeContainer();
+
+	logger.info('Markdown Kanban extension deactivated');
+}

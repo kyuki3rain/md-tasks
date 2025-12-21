@@ -151,4 +151,137 @@ describe('FrontmatterConfigProvider', () => {
 			expect(result).toEqual(['custom']);
 		});
 	});
+
+	describe('設定解決の優先順位（フロントマター → VSCode設定 → デフォルト）', () => {
+		it('全項目がフロントマターで定義されている場合、フロントマターが優先される', async () => {
+			const frontmatterConfig = {
+				statuses: ['fm-todo', 'fm-done'],
+				doneStatuses: ['fm-done'],
+				defaultStatus: 'fm-todo',
+				defaultDoneStatus: 'fm-done',
+				sortBy: 'alphabetical' as const,
+				syncCheckboxWithDone: false,
+			};
+			const vscodeConfig: KanbanConfig = {
+				statuses: ['vscode-todo', 'vscode-done'],
+				doneStatuses: ['vscode-done'],
+				defaultStatus: 'vscode-todo',
+				defaultDoneStatus: 'vscode-done',
+				sortBy: 'priority',
+				syncCheckboxWithDone: true,
+			};
+			const markdownClient = createMockMarkdownClient(frontmatterConfig);
+			const documentClient = createMockDocumentClient(
+				'---\nkanban:\n  statuses: [fm-todo, fm-done]\n---',
+			);
+			const fallbackProvider = createMockFallbackProvider(vscodeConfig);
+			const provider = new FrontmatterConfigProvider(
+				markdownClient,
+				documentClient,
+				fallbackProvider,
+			);
+
+			const result = await provider.getConfig();
+
+			// すべてフロントマターの値が使われる
+			expect(result.statuses).toEqual(['fm-todo', 'fm-done']);
+			expect(result.doneStatuses).toEqual(['fm-done']);
+			expect(result.defaultStatus).toBe('fm-todo');
+			expect(result.defaultDoneStatus).toBe('fm-done');
+			expect(result.sortBy).toBe('alphabetical');
+			expect(result.syncCheckboxWithDone).toBe(false);
+		});
+
+		it('フロントマターで一部のみ定義されている場合、残りはVSCode設定が使われる', async () => {
+			const frontmatterConfig = {
+				statuses: ['fm-todo', 'fm-in-progress', 'fm-done'],
+				// 他の設定は未定義
+			};
+			const vscodeConfig: KanbanConfig = {
+				statuses: ['vscode-todo', 'vscode-done'],
+				doneStatuses: ['vscode-completed'],
+				defaultStatus: 'vscode-new',
+				defaultDoneStatus: 'vscode-completed',
+				sortBy: 'due',
+				syncCheckboxWithDone: false,
+			};
+			const markdownClient = createMockMarkdownClient(frontmatterConfig);
+			const documentClient = createMockDocumentClient(
+				'---\nkanban:\n  statuses: [fm-todo, fm-done]\n---',
+			);
+			const fallbackProvider = createMockFallbackProvider(vscodeConfig);
+			const provider = new FrontmatterConfigProvider(
+				markdownClient,
+				documentClient,
+				fallbackProvider,
+			);
+
+			const result = await provider.getConfig();
+
+			// statusesはフロントマター、他はVSCode設定
+			expect(result.statuses).toEqual(['fm-todo', 'fm-in-progress', 'fm-done']);
+			expect(result.doneStatuses).toEqual(['vscode-completed']);
+			expect(result.defaultStatus).toBe('vscode-new');
+			expect(result.defaultDoneStatus).toBe('vscode-completed');
+			expect(result.sortBy).toBe('due');
+			expect(result.syncCheckboxWithDone).toBe(false);
+		});
+
+		it('フロントマターもVSCode設定もない場合、デフォルト値が使われる', async () => {
+			const markdownClient = createMockMarkdownClient(undefined);
+			const documentClient = createMockDocumentClient('# No frontmatter');
+			// フォールバックプロバイダなし
+			const provider = new FrontmatterConfigProvider(markdownClient, documentClient);
+
+			const result = await provider.getConfig();
+
+			expect(result).toEqual(DEFAULT_CONFIG);
+		});
+
+		it('フロントマターが空配列の場合、フォールバック設定が使われる', async () => {
+			const frontmatterConfig = {
+				statuses: [], // 空配列
+			};
+			const vscodeConfig: KanbanConfig = {
+				...DEFAULT_CONFIG,
+				statuses: ['vscode-fallback'],
+			};
+			const markdownClient = createMockMarkdownClient(frontmatterConfig);
+			const documentClient = createMockDocumentClient('---\nkanban:\n  statuses: []\n---');
+			const fallbackProvider = createMockFallbackProvider(vscodeConfig);
+			const provider = new FrontmatterConfigProvider(
+				markdownClient,
+				documentClient,
+				fallbackProvider,
+			);
+
+			const result = await provider.getConfig();
+
+			// 空配列はフォールバック
+			expect(result.statuses).toEqual(['vscode-fallback']);
+		});
+
+		it('フロントマターが空文字列の場合、フォールバック設定が使われる', async () => {
+			const frontmatterConfig = {
+				defaultStatus: '', // 空文字列
+			};
+			const vscodeConfig: KanbanConfig = {
+				...DEFAULT_CONFIG,
+				defaultStatus: 'vscode-default',
+			};
+			const markdownClient = createMockMarkdownClient(frontmatterConfig);
+			const documentClient = createMockDocumentClient('---\nkanban:\n  defaultStatus: ""\n---');
+			const fallbackProvider = createMockFallbackProvider(vscodeConfig);
+			const provider = new FrontmatterConfigProvider(
+				markdownClient,
+				documentClient,
+				fallbackProvider,
+			);
+
+			const result = await provider.getConfig();
+
+			// 空文字列はフォールバック
+			expect(result.defaultStatus).toBe('vscode-default');
+		});
+	});
 });

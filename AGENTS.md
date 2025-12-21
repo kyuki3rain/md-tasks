@@ -172,8 +172,8 @@ src/
 ## 現在のステータス
 
 - **バージョン**: 0.0.1（開発中）
-- **状態**: Phase 6（インターフェース層の実装）完了
-- **次のステップ**: Phase 7（WebView UIの実装）へ
+- **状態**: Phase 9（設定機能の実装）完了
+- **次のステップ**: Phase 10（統合とテスト）へ
 
 ### 完了済みフェーズ
 
@@ -223,6 +223,22 @@ src/
   - WebViewMessageHandler: WebViewからのメッセージハンドリング
   - メッセージ型定義（Extension ⇔ WebView間の通信プロトコル）
   - 35件のユニットテスト（計206件）
+
+- ✅ Phase 7: WebView UIの実装
+  - KanbanBoard, Column, TaskCard, TaskModal, PathBadge コンポーネント
+  - @dnd-kit/coreによるドラッグ&ドロップ実装
+  - useVscodeApi, useKanban カスタムフック
+
+- ✅ Phase 8: ブートストラップ層の実装
+  - DIコンテナの構築
+  - KanbanPanelProvider（WebViewパネル管理）
+  - コマンド登録とイベントリスナー
+  - 14件のユニットテスト（計220件）
+
+- ✅ Phase 9: 設定機能の実装
+  - VSCode設定スキーマ（package.jsonにconfiguration追加）
+  - 設定解決ロジック（フロントマター → VSCode設定 → デフォルト）
+  - 5件のユニットテスト（計225件）
 
 ---
 

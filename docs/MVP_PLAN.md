@@ -242,29 +242,33 @@ src/
 
 ---
 
-### Phase 8: ブートストラップ層の実装
+### Phase 8: ブートストラップ層の実装 ✅
 
 **目標**: アプリケーションのエントリーポイントと依存性注入を実装
 
 #### 8.1 エントリーポイント
 
-- [ ] `activate` 関数の実装
-- [ ] `deactivate` 関数の実装
+- [x] `activate` 関数の実装
+- [x] `deactivate` 関数の実装
 
 #### 8.2 依存性注入
 
-- [ ] DIコンテナの構築
-- [ ] 各層のインスタンス生成と注入
+- [x] DIコンテナの構築
+- [x] 各層のインスタンス生成と注入
 
 #### 8.3 コマンド登録
 
-- [ ] `markdownKanban.openBoard` コマンドの登録
-- [ ] エディタ右上のアクションボタン設定
+- [x] `markdownKanban.openBoard` コマンドの登録
+- [x] エディタ右上のアクションボタン設定
 
 #### 8.4 WebViewパネル
 
-- [ ] WebViewPanelの生成
-- [ ] Reactアプリのロード
+- [x] WebViewPanelの生成
+- [x] Reactアプリのロード
+
+#### 8.5 テスト
+
+- [x] 14件のユニットテストを追加（計220件）
 
 ---
 
@@ -358,8 +362,9 @@ vscode.postMessage({ type: 'UPDATE_TASK', payload: { id, status } });
 5. ~~Phase 5: インフラストラクチャ層の実装~~ ✅
 6. ~~Phase 6: インターフェース層の実装~~ ✅
 7. ~~Phase 7: WebView UIの実装~~ ✅
-8. Phase 8: ブートストラップ層の実装
-9. 各フェーズ完了後にレビュー・調整
+8. ~~Phase 8: ブートストラップ層の実装~~ ✅
+9. Phase 9: 設定機能の実装
+10. 各フェーズ完了後にレビュー・調整
 
 ---
 
@@ -381,3 +386,4 @@ vscode.postMessage({ type: 'UPDATE_TASK', payload: { id, status } });
 | 2025-01-XX | Phase 5 完了。インフラストラクチャ層のアダプター実装（計171件のテスト） |
 | 2025-01-XX | Phase 6 完了。インターフェース層の実装（計206件のテスト） |
 | 2025-01-XX | Phase 7 完了。WebView UIの実装（KanbanBoard, Column, TaskCard, TaskModal, PathBadge, D&D） |
+| 2025-12-21 | Phase 8 完了。ブートストラップ層の実装（DIコンテナ、KanbanPanelProvider、計220件のテスト） |

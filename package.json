@@ -1,7 +1,7 @@
 {
   "name": "markdown-kanban",
-  "displayName": "markdown-kanban",
-  "description": "",
+  "displayName": "Markdown Kanban",
+  "description": "View and manage TODO lists in Markdown files as a Kanban board",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.107.0"
@@ -9,15 +9,44 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:markdown"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "markdown-kanban.helloWorld",
-        "title": "Hello World"
+        "command": "markdownKanban.openBoard",
+        "title": "Open Kanban Board",
+        "category": "Markdown Kanban",
+        "icon": "$(layout)"
+      },
+      {
+        "command": "markdownKanban.openBoardFromEditor",
+        "title": "Open Kanban Board",
+        "category": "Markdown Kanban",
+        "icon": "$(layout)"
       }
-    ]
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "when": "resourceLangId == markdown",
+          "command": "markdownKanban.openBoardFromEditor",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "markdownKanban.openBoard",
+          "when": "resourceLangId == markdown"
+        },
+        {
+          "command": "markdownKanban.openBoardFromEditor",
+          "when": "false"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "pnpm run package",

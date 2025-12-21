@@ -1,3 +1,19 @@
+/**
+ * MarkdownTaskAdapter 統合テスト
+ *
+ * このテストはMarkdownTaskAdapterの振る舞いを、実際のMarkdown文字列入力を使って
+ * 検証する統合テストです。RemarkClientをモック化せず、実際のremark/gray-matter
+ * ライブラリを使用してパース・シリアライズの動作を確認します。
+ *
+ * テストケースは docs/REQUIREMENTS.md の仕様に基づいて設計されています：
+ * - タスクの認識（チェックボックス形式）
+ * - パス（見出し階層からの抽出）
+ * - メタデータ（子要素の key: value 形式）
+ * - ステータス管理（決定ロジック、完了判定）
+ * - フロントマター設定
+ * - タスクID生成と重複検出
+ * - 編集操作（更新・作成・削除）
+ */
 import { describe, expect, it } from 'vitest';
 import { Path } from '../../domain/valueObjects/path';
 import { Status } from '../../domain/valueObjects/status';
@@ -180,6 +196,27 @@ describe('MarkdownTaskAdapter', () => {
 				expect(tasks[0].status.value).toBe('todo');
 				expect(tasks[1].status.value).toBe('done');
 			});
+
+			it('空のvalueは無視する', () => {
+				const markdown = `- [ ] タスク1
+  - note:`;
+				const result = adapter.parse(markdown);
+
+				expect(result.isOk()).toBe(true);
+				const { tasks } = result._unsafeUnwrap();
+				// 空のvalueはメタデータとして採用しない
+				expect(tasks[0].metadata.note).toBeUndefined();
+			});
+
+			it('valueの前後の空白はトリムする', () => {
+				const markdown = `- [ ] タスク1
+  - status:   in-progress   `;
+				const result = adapter.parse(markdown);
+
+				expect(result.isOk()).toBe(true);
+				const { tasks } = result._unsafeUnwrap();
+				expect(tasks[0].status.value).toBe('in-progress');
+			});
 		});
 
 		describe('引用・コードブロック内の除外', () => {
@@ -217,6 +254,38 @@ describe('MarkdownTaskAdapter', () => {
 				const { tasks } = result._unsafeUnwrap();
 				expect(tasks).toHaveLength(1);
 				expect(tasks[0].title).toBe('タスク `- [ ] インラインコード`');
+			});
+		});
+
+		describe('タスクタイトル内のMarkdown書式', () => {
+			// NOTE: パーサーはASTからプレーンテキストを抽出する
+			// Markdown書式はUI側でレンダリング時に処理される
+			it('太字を含むタスクタイトルはプレーンテキストとして抽出される', () => {
+				const markdown = '- [ ] **重要な**タスク';
+				const result = adapter.parse(markdown);
+
+				expect(result.isOk()).toBe(true);
+				const { tasks } = result._unsafeUnwrap();
+				expect(tasks[0].title).toBe('重要なタスク');
+			});
+
+			it('リンクを含むタスクタイトルはリンクテキストのみ抽出される', () => {
+				const markdown = '- [ ] [ドキュメント](https://example.com)を読む';
+				const result = adapter.parse(markdown);
+
+				expect(result.isOk()).toBe(true);
+				const { tasks } = result._unsafeUnwrap();
+				expect(tasks[0].title).toBe('ドキュメントを読む');
+			});
+
+			it('インラインコードを含むタスクタイトルはバッククォート含めて保持される', () => {
+				const markdown = '- [ ] `API`の修正';
+				const result = adapter.parse(markdown);
+
+				expect(result.isOk()).toBe(true);
+				const { tasks } = result._unsafeUnwrap();
+				// インラインコードはバッククォート含めて保持される
+				expect(tasks[0].title).toBe('`API`の修正');
 			});
 		});
 
@@ -266,6 +335,23 @@ title: My Document
 				expect(result.isOk()).toBe(true);
 				const { config } = result._unsafeUnwrap();
 				expect(config).toBeUndefined();
+			});
+
+			it('フロントマターがある場合も正しい行番号を追跡する', () => {
+				const markdown = `---
+kanban:
+  statuses:
+    - todo
+    - done
+---
+
+# 仕事
+- [ ] タスク1`;
+				const result = adapter.parse(markdown);
+
+				expect(result.isOk()).toBe(true);
+				const { tasks } = result._unsafeUnwrap();
+				expect(tasks[0].startLine).toBe(9);
 			});
 		});
 
@@ -423,6 +509,41 @@ title: My Document
 				expect(result.isOk()).toBe(true);
 				const updated = result._unsafeUnwrap();
 				expect(updated).toContain('[ ]');
+			});
+
+			it('statusメタデータがない場合は新規追加する', () => {
+				const markdown = `- [ ] タスク1`;
+				const newStatus = Status.create('in-progress')._unsafeUnwrap();
+				const result = adapter.applyEdit(markdown, {
+					taskId: '（ルート）::タスク1',
+					newStatus,
+				});
+
+				expect(result.isOk()).toBe(true);
+				const updated = result._unsafeUnwrap();
+				expect(updated).toContain('status: in-progress');
+			});
+
+			// NOTE: パス変更機能（newPath）は将来実装予定
+		});
+
+		describe('重複タスクの編集', () => {
+			it('重複タスクがある場合は最初のタスクを更新する', () => {
+				const markdown = `# 仕事
+- [ ] APIの実装
+- [ ] APIの実装`;
+				const newStatus = Status.create('done')._unsafeUnwrap();
+				const result = adapter.applyEdit(markdown, {
+					taskId: '仕事::APIの実装',
+					newStatus,
+					doneStatuses: ['done'],
+				});
+
+				expect(result.isOk()).toBe(true);
+				const updated = result._unsafeUnwrap();
+				// 最初のタスクだけがチェック済みになる
+				// status行が追加されるため、2番目のタスクは3行目以降
+				expect(updated).toMatch(/- \[x\] APIの実装[\s\S]*- \[ \] APIの実装/);
 			});
 		});
 

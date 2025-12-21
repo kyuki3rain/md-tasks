@@ -172,8 +172,8 @@ src/
 ## 現在のステータス
 
 - **バージョン**: 0.0.1（開発中）
-- **状態**: Phase 4（アプリケーション層の実装）完了
-- **次のステップ**: Phase 5（インフラストラクチャ層の実装）へ
+- **状態**: Phase 5（インフラストラクチャ層の実装）完了
+- **次のステップ**: Phase 6（インターフェース層の実装）へ
 
 ### 完了済みフェーズ
 
@@ -207,6 +207,14 @@ src/
   - ChangeTaskStatusUseCase: ステータス変更（チェックボックス連動）
   - GetConfigUseCase: 設定取得
   - 25件のユニットテスト（計133件）
+
+- ✅ Phase 5: インフラストラクチャ層の実装
+  - VscodeDocumentClient: VSCodeドキュメント操作（WorkspaceEdit API含む）
+  - VscodeConfigClient: VSCode設定APIのラッパー
+  - MarkdownTaskRepository: TaskRepositoryの実装
+  - VscodeConfigProvider: ConfigProviderの実装（VSCode設定）
+  - FrontmatterConfigProvider: ConfigProviderの実装（フロントマター）
+  - 38件のユニットテスト（計171件）
 
 ---
 

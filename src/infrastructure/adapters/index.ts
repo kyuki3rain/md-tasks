@@ -1,3 +1,4 @@
 // Infrastructure Adapters
-// 現在はアダプターはありません。将来、MarkdownTaskRepositoryなどが追加される予定です。
-export {};
+export { FrontmatterConfigProvider } from './frontmatterConfigProvider';
+export { MarkdownTaskRepository } from './markdownTaskRepository';
+export { VscodeConfigProvider } from './vscodeConfigProvider';

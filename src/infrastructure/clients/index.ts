@@ -11,3 +11,11 @@ export {
 	type TaskEdit,
 } from './markdownTaskClient';
 export { type FrontmatterResult, RemarkClient } from './remarkClient';
+export { VscodeConfigClient, type VscodeConfigDeps } from './vscodeConfigClient';
+export {
+	DocumentEditError,
+	type DocumentInfo,
+	DocumentNotFoundError,
+	VscodeDocumentClient,
+	type VscodeDocumentDeps,
+} from './vscodeDocumentClient';

@@ -169,7 +169,7 @@ src/
 
 ---
 
-### Phase 5: インフラストラクチャ層の実装
+### Phase 5: インフラストラクチャ層の実装 ✅
 
 **目標**: 外部システム（VSCode API、ファイルシステム）との連携を実装
 
@@ -177,14 +177,18 @@ src/
 
 - [x] `RemarkClient` - remark/AST操作のラッパー（Phase 3で実装済み）
 - [x] `MarkdownTaskClient` - Markdownパース・編集（Phase 3で実装済み）
-- [ ] `VscodeDocumentClient` - VSCodeドキュメント操作
-- [ ] `VscodeWorkspaceClient` - WorkspaceEdit API操作
+- [x] `VscodeDocumentClient` - VSCodeドキュメント操作（WorkspaceEdit API含む）
+- [x] `VscodeConfigClient` - VSCode設定APIのラッパー
 
 #### 5.2 Adapter実装（Portの実装）
 
-- [ ] `MarkdownTaskRepository` - TaskRepositoryの実装（MarkdownTaskClientを使用）
-- [ ] `VscodeConfigProvider` - ConfigProviderの実装（VSCode設定）
-- [ ] `FrontmatterConfigProvider` - ConfigProviderの実装（フロントマター）
+- [x] `MarkdownTaskRepository` - TaskRepositoryの実装（MarkdownTaskClientを使用）
+- [x] `VscodeConfigProvider` - ConfigProviderの実装（VSCode設定）
+- [x] `FrontmatterConfigProvider` - ConfigProviderの実装（フロントマター）
+
+#### 5.3 テスト
+
+- [x] 38件のユニットテストを追加（計171件）
 
 ---
 
@@ -341,8 +345,9 @@ vscode.postMessage({ type: 'UPDATE_TASK', payload: { id, status } });
 2. ~~TDDでドメイン層を実装~~ ✅
 3. ~~Phase 3: Markdownパーサーの実装~~ ✅
 4. ~~Phase 4: アプリケーション層の実装~~ ✅
-5. Phase 5: インフラストラクチャ層の実装
-6. 各フェーズ完了後にレビュー・調整
+5. ~~Phase 5: インフラストラクチャ層の実装~~ ✅
+6. Phase 6: インターフェース層の実装
+7. 各フェーズ完了後にレビュー・調整
 
 ---
 

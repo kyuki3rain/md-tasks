@@ -112,13 +112,30 @@ pnpm run package
 ```
 src/
 ├── domain/           # ドメイン層（ビジネスルールの中核）
+│   └── ports/        # Port（インターフェース定義）
 ├── application/      # アプリケーション層（ユースケース）
+│   └── ports/        # Port（インターフェース定義）
 ├── interface/        # インターフェース層（外部リクエスト受付）
+│   ├── adapters/     # Adapter（Portの実装）
+│   └── clients/      # Client（WebView通信等）
 ├── infrastructure/   # インフラストラクチャ層（外部システム連携）
+│   ├── adapters/     # Adapter（Portの実装）
+│   └── clients/      # Client（remark, VSCode API等のラッパー）
 ├── bootstrap/        # ブートストラップ層（エントリーポイント、DI）
 ├── shared/           # 共有ユーティリティ
 └── webview/          # WebView（React、別構成）
 ```
+
+### Port / Adapter / Client
+
+| 用語 | 意味 | 配置場所 |
+|------|------|----------|
+| **Port** | インターフェース（契約） | Domain層 / Application層 |
+| **Adapter** | Portの実装 | Interface層 / Infrastructure層 |
+| **Client** | 外部システムのラッパー | Interface層 / Infrastructure層 |
+
+- **Client**: 外部システムごとに1つ（AdapterはClientに依存することもある）
+- **Adapter**: Portごとに1つ
 
 詳細は [docs/CONSTITUTION.md](./docs/CONSTITUTION.md) を参照。
 
@@ -155,8 +172,8 @@ src/
 ## 現在のステータス
 
 - **バージョン**: 0.0.1（開発中）
-- **状態**: Phase 2（ドメイン層の実装）完了
-- **次のステップ**: Phase 3（Markdownパーサーの実装）へ
+- **状態**: Phase 3（Markdownパーサーの実装）完了
+- **次のステップ**: Phase 4（アプリケーション層の実装）へ
 
 ### 完了済みフェーズ
 
@@ -172,6 +189,15 @@ src/
   - ドメインエラー: InvalidStatusError, TaskParseError, TaskNotFoundError
   - ポート: TaskRepository, ConfigProvider
   - 57件のユニットテスト
+
+- ✅ Phase 3: Markdownパーサーの実装
+  - RemarkClient: remark/gray-matterのラッパー
+  - MarkdownTaskClient: Markdownパース・シリアライズ（RemarkClientを使用）
+  - チェックボックス認識、見出し階層解析、メタデータ抽出
+  - タスクの更新・作成・削除（部分編集、元の書式を保持）
+  - フロントマターからの設定読み込み
+  - タスクID生成・重複検出
+  - 48件の統合テスト（計108件）
 
 ---
 

@@ -97,21 +97,80 @@ VSCode拡張の初期構築には公式推奨のツールを使用する。
 │  - 依存性注入（DI）                                       │
 ├─────────────────────────────────────────────────────────┤
 │ Interface層                         Infrastructure層     │
-│  - Port（ユースケース呼び出し）      - Client（外部連携）  │
-│  - DTO変換                          - Port実装            │
-│  - エラーログ出力                    - ドメインエラー変換   │
+│  - Adapter（Portの実装）            - Adapter（Portの実装）│
+│  - Client（外部との通信）           - Client（外部連携）   │
+│  - DTO変換、エラーログ出力          - ドメインエラー変換   │
 ├─────────────────────────────────────────────────────────┤
 │ Application層                                            │
 │  - ユースケース                                           │
-│  - ポートインターフェース定義                              │
+│  - Port（インターフェース定義）                            │
 ├─────────────────────────────────────────────────────────┤
 │ Domain層                                                 │
 │  - エンティティ                                           │
 │  - 値オブジェクト                                         │
 │  - ドメインエラー定義                                     │
-│  - ポートインターフェース定義                              │
+│  - Port（インターフェース定義）                            │
 └─────────────────────────────────────────────────────────┘
 ```
+
+### Port / Adapter / Client の定義
+
+| 用語 | 意味 | 配置場所 |
+|------|------|----------|
+| **Port** | インターフェース（契約） | Domain層 / Application層 |
+| **Adapter** | Portの実装クラス | Interface層 / Infrastructure層 |
+| **Client** | 外部システムとの通信を担当 | Interface層 / Infrastructure層 |
+
+```
+Port（インターフェース）
+  ↑ implements
+Adapter（実装）
+  ↓ uses
+Client（外部システムラッパー）
+  ↓ calls
+外部システム（VSCode API, remark, ファイルシステム等）
+```
+
+### Port の種類と配置
+
+ヘキサゴナルアーキテクチャにおけるPort分類：
+
+| Port種類 | 定義場所 | 実装場所 | 役割 | 例 |
+|---------|---------|---------|------|-----|
+| **Driving Port（駆動側）** | Application層 | Interface層 | 外部→アプリを呼び出す入口 | TaskController |
+| **Driven Port（被駆動側）** | Domain層 | Infrastructure層 | アプリ→外部を呼び出す出口 | TaskRepository, ConfigProvider |
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                        Interface層                           │
+│  Adapter: TaskController, WebViewMessageHandler              │
+│          ↓ implements                                        │
+├──────────────────────────────────────────────────────────────┤
+│                       Application層                          │
+│  Driving Port: ← 外部からの呼び出しを受ける                    │
+│  UseCase: GetTasksUseCase, UpdateTaskUseCase                 │
+│          ↓ uses                                              │
+├──────────────────────────────────────────────────────────────┤
+│                        Domain層                              │
+│  Driven Port: → 外部リソースへアクセスする契約                  │
+│  Port: TaskRepository, ConfigProvider                        │
+│          ↑ implements                                        │
+├──────────────────────────────────────────────────────────────┤
+│                    Infrastructure層                          │
+│  Adapter: MarkdownTaskRepository, VscodeConfigProvider       │
+│          ↓ uses                                              │
+│  Client: RemarkClient, VscodeDocumentClient                  │
+└──────────────────────────────────────────────────────────────┘
+```
+
+#### 配置ルール
+
+- **Client**: 外部システム・層境界ごとに1つ
+  - Infrastructure: `remarkClient`, `vscodeFileClient` など
+  - Interface: `webviewClient`, `commandDispatcher` など
+- **Adapter**: Portごとに1つ（Clientに依存することもある）
+  - `MarkdownTaskRepository` implements `TaskRepository`
+  - `VscodeConfigProvider` implements `ConfigProvider`
 
 ### ディレクトリ構成
 
@@ -121,19 +180,19 @@ src/
 │   ├── entities/     # エンティティ
 │   ├── valueObjects/ # 値オブジェクト
 │   ├── errors/       # ドメインエラー
-│   └── ports/        # ポートインターフェース
+│   └── ports/        # Port（インターフェース定義）
 │
 ├── application/      # アプリケーション層
 │   ├── usecases/     # ユースケース
-│   └── ports/        # アプリケーション層ポート
+│   └── ports/        # Port（インターフェース定義）
 │
 ├── interface/        # インターフェース層
-│   ├── ports/        # ユースケース呼び出しポート
-│   └── clients/      # 外部クライアント（dispatcher等）
+│   ├── adapters/     # Adapter（Portの実装）
+│   └── clients/      # Client（WebView通信、dispatcher等）
 │
 ├── infrastructure/   # インフラストラクチャ層
-│   ├── ports/        # ポート実装
-│   └── clients/      # 外部システムクライアント
+│   ├── adapters/     # Adapter（Portの実装）
+│   └── clients/      # Client（remark, VSCode API等のラッパー）
 │
 ├── bootstrap/        # ブートストラップ層
 │   ├── extension.ts  # VSCode拡張エントリーポイント
@@ -164,15 +223,15 @@ src/
 - 外部からのリクエストを受け付ける
 - DTOを使ってユースケースを呼び出す
 - エラーログの出力
-- **ports/**: ユースケースごとのポート
+- **adapters/**: Portの実装（ユースケース呼び出し等）
 - **clients/**: dispatcher、WebView通信など
 
 #### Infrastructure層
 - ドメイン層で定義されたポートの実装
 - 外部システムとの連携（VSCode API、ファイルシステム等）
 - 外部エラーをドメインエラーに変換
-- **ports/**: ドメインポートの実装
-- **clients/**: 外部システムごとのクライアント
+- **adapters/**: Portの実装（Repository、Provider等）
+- **clients/**: 外部システムごとのラッパー（remark、VSCode API等）
 
 #### Bootstrap層
 - アプリケーションのエントリーポイント

@@ -28,9 +28,10 @@
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
     "watch:webview": "cd src/webview && pnpm run dev",
     "package": "pnpm run check-types && pnpm run lint && node esbuild.js --production && pnpm run compile:webview",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
+    "compile-tests": "node esbuild.e2e.js",
+    "watch-tests": "node esbuild.e2e.js --watch",
+    "pretest": "pnpm run check-types && pnpm run lint",
+    "pretest:e2e": "pnpm run compile-tests && pnpm run compile",
     "check-types": "tsc --noEmit",
     "lint": "biome check src",
     "lint:fix": "biome check --write src",
@@ -38,10 +39,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "vscode-test"
+    "test:e2e": "pnpm run pretest:e2e && vscode-test"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.10",
+    "@types/mdast": "^4.0.4",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
     "@types/vscode": "^1.107.0",
@@ -53,7 +55,10 @@
     "vitest": "^4.0.16"
   },
   "dependencies": {
+    "gray-matter": "^4.0.3",
     "neverthrow": "^8.2.0",
+    "remark": "^15.0.1",
+    "remark-gfm": "^4.0.1",
     "zod": "^4.2.1"
   }
 }

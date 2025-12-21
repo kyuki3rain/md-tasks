@@ -111,38 +111,42 @@ src/
 
 ---
 
-### Phase 3: Markdownパーサーの実装
+### Phase 3: Markdownパーサーの実装 ✅
 
 **目標**: Markdownファイルからタスクを抽出・更新する機能を実装
 
 #### 3.1 パーサー実装
 
-- [ ] チェックボックス行の認識
-- [ ] 見出し階層の解析（パス抽出）
-- [ ] 子要素の解析（`key: value`形式）
-- [ ] 引用・コードブロック内の除外
-- [ ] フロントマターのパース
+- [x] チェックボックス行の認識
+- [x] 見出し階層の解析（パス抽出）
+- [x] 子要素の解析（`key: value`形式）
+- [x] 引用・コードブロック内の除外
+- [x] フロントマターのパース
 
 #### 3.2 タスクID生成・重複検出
 
-- [ ] タスクID生成（パス + タイトル）
-- [ ] 重複タスク検出
-- [ ] 重複時のWarning生成
+- [x] タスクID生成（パス + タイトル）
+- [x] 重複タスク検出
+- [x] 重複時のWarning生成
 
 #### 3.3 シリアライザー実装（部分編集）
 
-- [ ] 操作の都度、最新Markdownを再パース
-- [ ] パス + タイトルでタスクノードを特定
-- [ ] 該当箇所のみを編集（WorkspaceEdit API）
-- [ ] ステータス変更時のチェックボックス連動
-- [ ] 新規タスクの挿入（パス配下の末尾）
-- [ ] タスクの削除
+- [x] 操作の都度、最新Markdownを再パース
+- [x] パス + タイトルでタスクノードを特定
+- [x] 該当箇所のみを編集（WorkspaceEdit API連携は Phase 5）
+- [x] ステータス変更時のチェックボックス連動
+- [x] 新規タスクの挿入（パス配下の末尾）
+- [x] タスクの削除
 
 #### 3.4 設計方針
 
 - ASTは保持しない（操作の都度パース）
 - 元のMarkdown構造を保持（タスク以外の部分は変更しない）
 - 外部編集との競合は「Last Write Wins」で解決
+
+#### 3.5 テスト
+
+- [x] 48件の統合テストを実装（MarkdownTaskClient）
 
 ---
 
@@ -165,16 +169,18 @@ src/
 
 **目標**: 外部システム（VSCode API、ファイルシステム）との連携を実装
 
-#### 5.1 ポート実装
+#### 5.1 Client実装（外部システムラッパー）
 
-- [ ] `MarkdownTaskRepository` - Markdownファイルからのタスク操作
-- [ ] `VscodeConfigProvider` - VSCode設定の取得
-- [ ] `FrontmatterConfigProvider` - フロントマターからの設定取得
-
-#### 5.2 クライアント実装
-
+- [x] `RemarkClient` - remark/AST操作のラッパー（Phase 3で実装済み）
+- [x] `MarkdownTaskClient` - Markdownパース・編集（Phase 3で実装済み）
 - [ ] `VscodeDocumentClient` - VSCodeドキュメント操作
-- [ ] `WorkspaceEditClient` - WorkspaceEdit API操作
+- [ ] `VscodeWorkspaceClient` - WorkspaceEdit API操作
+
+#### 5.2 Adapter実装（Portの実装）
+
+- [ ] `MarkdownTaskRepository` - TaskRepositoryの実装（MarkdownTaskClientを使用）
+- [ ] `VscodeConfigProvider` - ConfigProviderの実装（VSCode設定）
+- [ ] `FrontmatterConfigProvider` - ConfigProviderの実装（フロントマター）
 
 ---
 
@@ -182,15 +188,15 @@ src/
 
 **目標**: 外部からのリクエストを受け付け、ユースケースを呼び出す
 
-#### 6.1 ポート実装
+#### 6.1 Client実装（外部通信）
+
+- [ ] `WebViewMessageClient` - WebViewへのメッセージ送受信
+
+#### 6.2 Adapter実装（Portの実装）
 
 - [ ] `TaskController` - タスク操作のエントリーポイント
 - [ ] `ConfigController` - 設定操作のエントリーポイント
-
-#### 6.2 WebView通信クライアント
-
-- [ ] `WebViewMessageDispatcher` - WebViewへのメッセージ送信
-- [ ] `WebViewMessageHandler` - WebViewからのメッセージ受信
+- [ ] `WebViewMessageHandler` - WebViewからのメッセージハンドリング
 
 ---
 
@@ -329,8 +335,9 @@ vscode.postMessage({ type: 'UPDATE_TASK', payload: { id, status } });
 
 1. ~~Phase 1の開発環境セットアップから開始~~ ✅
 2. ~~TDDでドメイン層を実装~~ ✅
-3. Phase 3: Markdownパーサーの実装
-4. 各フェーズ完了後にレビュー・調整
+3. ~~Phase 3: Markdownパーサーの実装~~ ✅
+4. Phase 4: アプリケーション層の実装
+5. 各フェーズ完了後にレビュー・調整
 
 ---
 
@@ -347,3 +354,4 @@ vscode.postMessage({ type: 'UPDATE_TASK', payload: { id, status } });
 |------|------|
 | 2025-01-XX | 初版作成 |
 | 2025-01-XX | Phase 1, 2 完了。Phase 3 詳細化（タスクID生成、重複検出、部分編集方針） |
+| 2025-01-XX | Phase 3 完了。MarkdownParser、MarkdownSerializer実装（計42件のテスト） |

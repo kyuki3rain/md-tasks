@@ -1,7 +1,7 @@
 /**
- * MarkdownTaskAdapter 統合テスト
+ * MarkdownTaskClient 統合テスト
  *
- * このテストはMarkdownTaskAdapterの振る舞いを、実際のMarkdown文字列入力を使って
+ * このテストはMarkdownTaskClientの振る舞いを、実際のMarkdown文字列入力を使って
  * 検証する統合テストです。RemarkClientをモック化せず、実際のremark/gray-matter
  * ライブラリを使用してパース・シリアライズの動作を確認します。
  *
@@ -17,16 +17,16 @@
 import { describe, expect, it } from 'vitest';
 import { Path } from '../../domain/valueObjects/path';
 import { Status } from '../../domain/valueObjects/status';
-import { MarkdownTaskAdapter } from './markdownTaskAdapter';
+import { MarkdownTaskClient } from './markdownTaskClient';
 
-describe('MarkdownTaskAdapter', () => {
-	const adapter = new MarkdownTaskAdapter();
+describe('MarkdownTaskClient', () => {
+	const client = new MarkdownTaskClient();
 
 	describe('parse', () => {
 		describe('チェックボックスの認識', () => {
 			it('未完了のチェックボックスを認識する', () => {
 				const markdown = '- [ ] タスク1';
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -37,7 +37,7 @@ describe('MarkdownTaskAdapter', () => {
 
 			it('完了のチェックボックスを認識する', () => {
 				const markdown = '- [x] タスク1';
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -48,7 +48,7 @@ describe('MarkdownTaskAdapter', () => {
 
 			it('大文字のXも完了として認識する', () => {
 				const markdown = '- [X] タスク1';
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -59,7 +59,7 @@ describe('MarkdownTaskAdapter', () => {
 				const markdown = `- [ ] タスク1
 - [x] タスク2
 - [ ] タスク3`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -72,7 +72,7 @@ describe('MarkdownTaskAdapter', () => {
 			it('通常のリストはタスクとして認識しない', () => {
 				const markdown = `- 通常のリスト
 - [ ] タスク`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -85,7 +85,7 @@ describe('MarkdownTaskAdapter', () => {
 			it('見出し配下のタスクにパスを設定する', () => {
 				const markdown = `# 仕事
 - [ ] タスク1`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -96,7 +96,7 @@ describe('MarkdownTaskAdapter', () => {
 				const markdown = `# 仕事
 ## プロジェクトA
 - [ ] タスク1`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -107,7 +107,7 @@ describe('MarkdownTaskAdapter', () => {
 				const markdown = `# 仕事
 ### 深いセクション
 - [ ] タスク1`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -116,7 +116,7 @@ describe('MarkdownTaskAdapter', () => {
 
 			it('見出しがない場合はルートパスになる', () => {
 				const markdown = '- [ ] タスク1';
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -129,7 +129,7 @@ describe('MarkdownTaskAdapter', () => {
 
 # 個人
 - [ ] タスク2`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -142,7 +142,7 @@ describe('MarkdownTaskAdapter', () => {
 			it('statusメタデータを認識する', () => {
 				const markdown = `- [ ] タスク1
   - status: in-progress`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -154,7 +154,7 @@ describe('MarkdownTaskAdapter', () => {
   - status: todo
   - priority: high
   - due: 2025-01-15`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -168,7 +168,7 @@ describe('MarkdownTaskAdapter', () => {
   - status: todo
   - これはメモです
   - priority high`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -179,7 +179,7 @@ describe('MarkdownTaskAdapter', () => {
 			it('空のkeyは無視する', () => {
 				const markdown = `- [ ] タスク1
   - : 値だけ`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -189,7 +189,7 @@ describe('MarkdownTaskAdapter', () => {
 			it('statusがない場合はチェック状態からデフォルトステータスを設定する', () => {
 				const markdown = `- [ ] 未完了タスク
 - [x] 完了タスク`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -200,7 +200,7 @@ describe('MarkdownTaskAdapter', () => {
 			it('空のvalueは無視する', () => {
 				const markdown = `- [ ] タスク1
   - note:`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -211,7 +211,7 @@ describe('MarkdownTaskAdapter', () => {
 			it('valueの前後の空白はトリムする', () => {
 				const markdown = `- [ ] タスク1
   - status:   in-progress   `;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -224,7 +224,7 @@ describe('MarkdownTaskAdapter', () => {
 				const markdown = `- [ ] 通常のタスク
 
 > - [ ] 引用内のチェックボックス`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -238,7 +238,7 @@ describe('MarkdownTaskAdapter', () => {
 \`\`\`
 - [ ] コードブロック内
 \`\`\``;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -248,7 +248,7 @@ describe('MarkdownTaskAdapter', () => {
 
 			it('インラインコード内のチェックボックスは無視する', () => {
 				const markdown = '- [ ] タスク `- [ ] インラインコード`';
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -262,7 +262,7 @@ describe('MarkdownTaskAdapter', () => {
 			// UI側でMarkdownとしてレンダリングする
 			it('太字を含むタスクタイトルはMarkdownとして保持される', () => {
 				const markdown = '- [ ] **重要な**タスク';
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -271,7 +271,7 @@ describe('MarkdownTaskAdapter', () => {
 
 			it('リンクを含むタスクタイトルはMarkdownとして保持される', () => {
 				const markdown = '- [ ] [ドキュメント](https://example.com)を読む';
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -280,7 +280,7 @@ describe('MarkdownTaskAdapter', () => {
 
 			it('インラインコードを含むタスクタイトルはMarkdownとして保持される', () => {
 				const markdown = '- [ ] `API`の修正';
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -303,7 +303,7 @@ kanban:
 ---
 
 - [ ] タスク1`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { config } = result._unsafeUnwrap();
@@ -316,7 +316,7 @@ kanban:
 
 			it('フロントマターがなくてもパースできる', () => {
 				const markdown = '- [ ] タスク1';
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { config } = result._unsafeUnwrap();
@@ -329,7 +329,7 @@ title: My Document
 ---
 
 - [ ] タスク1`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { config } = result._unsafeUnwrap();
@@ -346,7 +346,7 @@ kanban:
 
 # 仕事
 - [ ] タスク1`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -359,7 +359,7 @@ kanban:
 				const markdown = `# 仕事
 ## プロジェクトA
 - [ ] APIの実装`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -368,7 +368,7 @@ kanban:
 
 			it('ルートパスの場合はタイトルのみがIDになる', () => {
 				const markdown = '- [ ] タスク1';
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -381,7 +381,7 @@ kanban:
 				const markdown = `# 仕事
 - [ ] APIの実装
 - [ ] APIの実装`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks, warnings } = result._unsafeUnwrap();
@@ -397,7 +397,7 @@ kanban:
 
 # 個人
 - [ ] タスク`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { warnings } = result._unsafeUnwrap();
@@ -410,7 +410,7 @@ kanban:
 				const markdown = `# 仕事
 - [ ] タスク1
 - [ ] タスク2`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -423,7 +423,7 @@ kanban:
   - status: todo
   - priority: high
 - [ ] タスク2`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
@@ -439,7 +439,7 @@ kanban:
 ## プロジェクトA
 ## プロジェクトB
 # 個人`;
-				const result = adapter.parse(markdown);
+				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { headings } = result._unsafeUnwrap();
@@ -456,7 +456,7 @@ kanban:
 		describe('タスク更新', () => {
 			it('タスクのタイトルを更新できる', () => {
 				const markdown = `- [ ] 古いタイトル`;
-				const result = adapter.applyEdit(markdown, {
+				const result = client.applyEdit(markdown, {
 					taskId: '（ルート）::古いタイトル',
 					newTitle: '新しいタイトル',
 				});
@@ -471,7 +471,7 @@ kanban:
 				const markdown = `- [ ] タスク1
   - status: todo`;
 				const newStatus = Status.create('in-progress')._unsafeUnwrap();
-				const result = adapter.applyEdit(markdown, {
+				const result = client.applyEdit(markdown, {
 					taskId: '（ルート）::タスク1',
 					newStatus,
 				});
@@ -484,7 +484,7 @@ kanban:
 			it('ステータスがdoneになるとチェックボックスが更新される', () => {
 				const markdown = `- [ ] タスク1`;
 				const newStatus = Status.create('done')._unsafeUnwrap();
-				const result = adapter.applyEdit(markdown, {
+				const result = client.applyEdit(markdown, {
 					taskId: '（ルート）::タスク1',
 					newStatus,
 					doneStatuses: ['done'],
@@ -499,7 +499,7 @@ kanban:
 				const markdown = `- [x] タスク1
   - status: done`;
 				const newStatus = Status.create('todo')._unsafeUnwrap();
-				const result = adapter.applyEdit(markdown, {
+				const result = client.applyEdit(markdown, {
 					taskId: '（ルート）::タスク1',
 					newStatus,
 					doneStatuses: ['done'],
@@ -513,7 +513,7 @@ kanban:
 			it('statusメタデータがない場合は新規追加する', () => {
 				const markdown = `- [ ] タスク1`;
 				const newStatus = Status.create('in-progress')._unsafeUnwrap();
-				const result = adapter.applyEdit(markdown, {
+				const result = client.applyEdit(markdown, {
 					taskId: '（ルート）::タスク1',
 					newStatus,
 				});
@@ -532,7 +532,7 @@ kanban:
 - [ ] APIの実装
 - [ ] APIの実装`;
 				const newStatus = Status.create('done')._unsafeUnwrap();
-				const result = adapter.applyEdit(markdown, {
+				const result = client.applyEdit(markdown, {
 					taskId: '仕事::APIの実装',
 					newStatus,
 					doneStatuses: ['done'],
@@ -550,7 +550,7 @@ kanban:
 			it('タスクを削除できる', () => {
 				const markdown = `- [ ] タスク1
 - [ ] タスク2`;
-				const result = adapter.applyEdit(markdown, {
+				const result = client.applyEdit(markdown, {
 					taskId: '（ルート）::タスク1',
 					delete: true,
 				});
@@ -566,7 +566,7 @@ kanban:
   - status: todo
   - priority: high
 - [ ] タスク2`;
-				const result = adapter.applyEdit(markdown, {
+				const result = client.applyEdit(markdown, {
 					taskId: '（ルート）::タスク1',
 					delete: true,
 				});
@@ -583,7 +583,7 @@ kanban:
 			it('ルートにタスクを作成できる', () => {
 				const markdown = '';
 				const status = Status.create('todo')._unsafeUnwrap();
-				const result = adapter.applyEdit(markdown, {
+				const result = client.applyEdit(markdown, {
 					create: {
 						title: '新しいタスク',
 						path: Path.create([]),
@@ -600,7 +600,7 @@ kanban:
 			it('見出し配下にタスクを作成できる', () => {
 				const markdown = `# 仕事`;
 				const status = Status.create('todo')._unsafeUnwrap();
-				const result = adapter.applyEdit(markdown, {
+				const result = client.applyEdit(markdown, {
 					create: {
 						title: '新しいタスク',
 						path: Path.create(['仕事']),
@@ -616,7 +616,7 @@ kanban:
 			it('完了ステータスで作成するとチェックボックスがチェック済みになる', () => {
 				const markdown = '';
 				const status = Status.create('done')._unsafeUnwrap();
-				const result = adapter.applyEdit(markdown, {
+				const result = client.applyEdit(markdown, {
 					create: {
 						title: '完了タスク',
 						path: Path.create([]),
@@ -633,7 +633,7 @@ kanban:
 			it('存在しない見出しにタスクを作成しようとするとエラー', () => {
 				const markdown = '# 仕事';
 				const status = Status.create('todo')._unsafeUnwrap();
-				const result = adapter.applyEdit(markdown, {
+				const result = client.applyEdit(markdown, {
 					create: {
 						title: '新しいタスク',
 						path: Path.create(['存在しない']),
@@ -648,7 +648,7 @@ kanban:
 		describe('エラーハンドリング', () => {
 			it('存在しないタスクIDでエラー', () => {
 				const markdown = '- [ ] タスク1';
-				const result = adapter.applyEdit(markdown, {
+				const result = client.applyEdit(markdown, {
 					taskId: '（ルート）::存在しない',
 					newTitle: '新しいタイトル',
 				});
@@ -659,7 +659,7 @@ kanban:
 			it('タスクIDなしで更新/削除しようとするとエラー', () => {
 				const markdown = '- [ ] タスク1';
 				const newStatus = Status.create('done')._unsafeUnwrap();
-				const result = adapter.applyEdit(markdown, {
+				const result = client.applyEdit(markdown, {
 					newStatus,
 				});
 

@@ -91,10 +91,10 @@ export class SerializerError extends Error {
 }
 
 /**
- * MarkdownTaskAdapter
- * Markdownファイルからタスクを抽出・編集するアダプター
+ * MarkdownTaskClient
+ * Markdownファイルからタスクを抽出・編集するクライアント
  */
-export class MarkdownTaskAdapter {
+export class MarkdownTaskClient {
 	private static readonly DEFAULT_STATUS = 'todo';
 	private static readonly DEFAULT_DONE_STATUS = 'done';
 	private static readonly KEY_VALUE_PATTERN = /^([^:]+):\s*(.+)$/;
@@ -407,10 +407,10 @@ export class MarkdownTaskAdapter {
 		}
 
 		if (isChecked) {
-			return config?.defaultDoneStatus ?? MarkdownTaskAdapter.DEFAULT_DONE_STATUS;
+			return config?.defaultDoneStatus ?? MarkdownTaskClient.DEFAULT_DONE_STATUS;
 		}
 
-		return config?.defaultStatus ?? MarkdownTaskAdapter.DEFAULT_STATUS;
+		return config?.defaultStatus ?? MarkdownTaskClient.DEFAULT_STATUS;
 	}
 
 	/**
@@ -431,7 +431,7 @@ export class MarkdownTaskAdapter {
 				}
 
 				const text = this.extractTextFromNodes(child.children).trim();
-				const match = text.match(MarkdownTaskAdapter.KEY_VALUE_PATTERN);
+				const match = text.match(MarkdownTaskClient.KEY_VALUE_PATTERN);
 
 				if (match) {
 					const key = match[1].trim();

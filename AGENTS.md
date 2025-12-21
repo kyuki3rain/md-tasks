@@ -192,7 +192,7 @@ src/
 
 - ✅ Phase 3: Markdownパーサーの実装
   - RemarkClient: remark/gray-matterのラッパー
-  - MarkdownTaskAdapter: パース・シリアライズ（Client/Adapter構成）
+  - MarkdownTaskClient: Markdownパース・シリアライズ（RemarkClientを使用）
   - チェックボックス認識、見出し階層解析、メタデータ抽出
   - タスクの更新・作成・削除（部分編集、元の書式を保持）
   - フロントマターからの設定読み込み

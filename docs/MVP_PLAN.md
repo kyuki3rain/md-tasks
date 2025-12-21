@@ -272,19 +272,23 @@ src/
 
 ---
 
-### Phase 9: 設定機能の実装
+### Phase 9: 設定機能の実装 ✅
 
 **目標**: 設定の定義と読み込みを実装
 
 #### 9.1 VSCode設定スキーマ
 
-- [ ] `package.json` にconfiguration項目を追加
+- [x] `package.json` にconfiguration項目を追加
   - statuses, doneStatuses, defaultStatus, defaultDoneStatus
   - sortBy, syncCheckboxWithDone
 
 #### 9.2 設定解決ロジック
 
-- [ ] フロントマター → VSCode設定 → デフォルト の優先順位実装
+- [x] フロントマター → VSCode設定 → デフォルト の優先順位実装
+
+#### 9.3 テスト
+
+- [x] 5件のユニットテストを追加（計225件）
 
 ---
 
@@ -363,8 +367,9 @@ vscode.postMessage({ type: 'UPDATE_TASK', payload: { id, status } });
 6. ~~Phase 6: インターフェース層の実装~~ ✅
 7. ~~Phase 7: WebView UIの実装~~ ✅
 8. ~~Phase 8: ブートストラップ層の実装~~ ✅
-9. Phase 9: 設定機能の実装
-10. 各フェーズ完了後にレビュー・調整
+9. ~~Phase 9: 設定機能の実装~~ ✅
+10. Phase 10: 統合とテスト
+11. 各フェーズ完了後にレビュー・調整
 
 ---
 
@@ -387,3 +392,4 @@ vscode.postMessage({ type: 'UPDATE_TASK', payload: { id, status } });
 | 2025-01-XX | Phase 6 完了。インターフェース層の実装（計206件のテスト） |
 | 2025-01-XX | Phase 7 完了。WebView UIの実装（KanbanBoard, Column, TaskCard, TaskModal, PathBadge, D&D） |
 | 2025-12-21 | Phase 8 完了。ブートストラップ層の実装（DIコンテナ、KanbanPanelProvider、計220件のテスト） |
+| 2025-12-21 | Phase 9 完了。設定機能の実装（VSCode設定スキーマ、設定解決ロジック、計225件のテスト） |

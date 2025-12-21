@@ -46,6 +46,54 @@
           "when": "false"
         }
       ]
+    },
+    "configuration": {
+      "title": "Markdown Kanban",
+      "properties": {
+        "markdownKanban.statuses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": ["todo", "in-progress", "done"],
+          "description": "ステータス一覧（カラムの表示順）"
+        },
+        "markdownKanban.doneStatuses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": ["done"],
+          "description": "完了扱いとするステータス"
+        },
+        "markdownKanban.defaultStatus": {
+          "type": "string",
+          "default": "todo",
+          "description": "デフォルトステータス（[ ] の時、status未指定時に使用）"
+        },
+        "markdownKanban.defaultDoneStatus": {
+          "type": "string",
+          "default": "done",
+          "description": "デフォルト完了ステータス（[x] の時、status未指定時に使用）"
+        },
+        "markdownKanban.sortBy": {
+          "type": "string",
+          "enum": ["markdown", "priority", "due", "alphabetical"],
+          "default": "markdown",
+          "enumDescriptions": [
+            "ファイル内の出現順",
+            "優先度順",
+            "期限順",
+            "アルファベット順"
+          ],
+          "description": "タスクのソート順"
+        },
+        "markdownKanban.syncCheckboxWithDone": {
+          "type": "boolean",
+          "default": true,
+          "description": "完了ステータス変更時にチェックボックスも連動させるか"
+        }
+      }
     }
   },
   "scripts": {

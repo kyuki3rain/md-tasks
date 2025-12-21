@@ -150,18 +150,22 @@ src/
 
 ---
 
-### Phase 4: アプリケーション層の実装
+### Phase 4: アプリケーション層の実装 ✅
 
 **目標**: ユースケースを実装する
 
 #### 4.1 ユースケース
 
-- [ ] `GetTasksUseCase` - タスク一覧取得
-- [ ] `CreateTaskUseCase` - タスク作成
-- [ ] `UpdateTaskUseCase` - タスク更新
-- [ ] `DeleteTaskUseCase` - タスク削除
-- [ ] `ChangeTaskStatusUseCase` - ステータス変更
-- [ ] `GetConfigUseCase` - 設定取得
+- [x] `GetTasksUseCase` - タスク一覧取得
+- [x] `CreateTaskUseCase` - タスク作成
+- [x] `UpdateTaskUseCase` - タスク更新
+- [x] `DeleteTaskUseCase` - タスク削除
+- [x] `ChangeTaskStatusUseCase` - ステータス変更
+- [x] `GetConfigUseCase` - 設定取得
+
+#### 4.2 テスト
+
+- [x] 25件のユニットテストを実装（計133件）
 
 ---
 
@@ -336,8 +340,9 @@ vscode.postMessage({ type: 'UPDATE_TASK', payload: { id, status } });
 1. ~~Phase 1の開発環境セットアップから開始~~ ✅
 2. ~~TDDでドメイン層を実装~~ ✅
 3. ~~Phase 3: Markdownパーサーの実装~~ ✅
-4. Phase 4: アプリケーション層の実装
-5. 各フェーズ完了後にレビュー・調整
+4. ~~Phase 4: アプリケーション層の実装~~ ✅
+5. Phase 5: インフラストラクチャ層の実装
+6. 各フェーズ完了後にレビュー・調整
 
 ---
 
@@ -355,3 +360,4 @@ vscode.postMessage({ type: 'UPDATE_TASK', payload: { id, status } });
 | 2025-01-XX | 初版作成 |
 | 2025-01-XX | Phase 1, 2 完了。Phase 3 詳細化（タスクID生成、重複検出、部分編集方針） |
 | 2025-01-XX | Phase 3 完了。MarkdownParser、MarkdownSerializer実装（計42件のテスト） |
+| 2025-01-XX | Phase 4 完了。6つのユースケース実装（計133件のテスト） |

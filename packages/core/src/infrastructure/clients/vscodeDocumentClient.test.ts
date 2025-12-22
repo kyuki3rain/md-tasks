@@ -3,6 +3,7 @@ import type * as vscode from 'vscode';
 import {
 	DocumentEditError,
 	DocumentNotFoundError,
+	NoActiveEditorError,
 	VscodeDocumentClient,
 	type VscodeDocumentDeps,
 } from './vscodeDocumentClient';
@@ -46,7 +47,7 @@ describe('VscodeDocumentClient', () => {
 
 			expect(result.isErr()).toBe(true);
 			if (result.isErr()) {
-				expect(result.error).toBeInstanceOf(DocumentNotFoundError);
+				expect(result.error).toBeInstanceOf(NoActiveEditorError);
 				expect(result.error.message).toBe('アクティブなエディタがありません');
 			}
 		});
@@ -166,7 +167,7 @@ describe('VscodeDocumentClient', () => {
 
 			expect(result.isErr()).toBe(true);
 			if (result.isErr()) {
-				expect(result.error).toBeInstanceOf(DocumentNotFoundError);
+				expect(result.error).toBeInstanceOf(NoActiveEditorError);
 			}
 		});
 

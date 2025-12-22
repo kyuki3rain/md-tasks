@@ -190,12 +190,21 @@ export function useKanban() {
 					tasks: prev.tasks.filter((t) => t.id !== payload.id),
 				}));
 			},
-			ERROR: (payload: { message: string }) => {
-				setState((prev) => ({
-					...prev,
-					error: payload.message,
-					isLoading: false,
-				}));
+			ERROR: (payload: { message: string; code?: string }) => {
+				// NoActiveEditorErrorは正常な状態遷移なのでエラーとして扱わない
+				if (payload.code === 'NoActiveEditorError') {
+					setState((prev) => ({
+						...prev,
+						error: 'Markdownファイルを開いてください',
+						isLoading: false,
+					}));
+				} else {
+					setState((prev) => ({
+						...prev,
+						error: payload.message,
+						isLoading: false,
+					}));
+				}
 			},
 		}),
 		[],

@@ -21,6 +21,17 @@ export class KanbanPanelProvider {
 	}
 
 	/**
+	 * 現在のアクティブエディタがMarkdownファイルの場合、そのURIを保存する
+	 */
+	private updateCurrentDocumentUri(): void {
+		const editor = vscode.window.activeTextEditor;
+		if (editor && this.isMarkdownDocument(editor.document)) {
+			this.container.getVscodeDocumentClient().setCurrentDocumentUri(editor.document.uri);
+			logger.debug(`Current document URI updated: ${editor.document.uri.toString()}`);
+		}
+	}
+
+	/**
 	 * パネルを表示または作成する
 	 */
 	public showOrCreate(viewColumn?: vscode.ViewColumn): void {
@@ -29,6 +40,10 @@ export class KanbanPanelProvider {
 			this.panel.reveal(viewColumn);
 			return;
 		}
+
+		// パネル作成前に現在のドキュメントURIを保存
+		// (createWebviewPanelの後はactiveTextEditorがundefinedになるため)
+		this.updateCurrentDocumentUri();
 
 		// 新しいパネルを作成
 		this.panel = vscode.window.createWebviewPanel(
@@ -126,6 +141,9 @@ export class KanbanPanelProvider {
 		// アクティブエディタ変更時
 		const activeEditorChange = vscode.window.onDidChangeActiveTextEditor(async (editor) => {
 			if (editor && this.isMarkdownDocument(editor.document)) {
+				// MarkdownファイルのURIを更新
+				this.container.getVscodeDocumentClient().setCurrentDocumentUri(editor.document.uri);
+				logger.debug(`Current document URI updated: ${editor.document.uri.toString()}`);
 				await this.sendTasksUpdate();
 			}
 		});
@@ -133,11 +151,17 @@ export class KanbanPanelProvider {
 
 		// ドキュメント変更時
 		const documentChange = vscode.workspace.onDidChangeTextDocument(async (event) => {
+			// currentDocumentUriがセットされている場合は、そのドキュメントの変更を検出
+			const currentUri = this.container.getVscodeDocumentClient().getCurrentDocumentUri();
+			const isCurrentDocument =
+				currentUri && event.document.uri.toString() === currentUri.toString();
+
+			// アクティブエディタのドキュメントまたはcurrentDocumentの変更を検出
 			const activeEditor = vscode.window.activeTextEditor;
-			if (activeEditor && event.document === activeEditor.document) {
-				if (this.isMarkdownDocument(event.document)) {
-					await this.sendTasksUpdate();
-				}
+			const isActiveDocument = activeEditor && event.document === activeEditor.document;
+
+			if ((isCurrentDocument || isActiveDocument) && this.isMarkdownDocument(event.document)) {
+				await this.sendTasksUpdate();
 			}
 		});
 		this.disposables.push(documentChange);

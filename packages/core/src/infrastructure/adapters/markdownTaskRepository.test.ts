@@ -38,6 +38,7 @@ const createMockVscodeDocumentClient = (
 ): VscodeDocumentClient =>
 	({
 		getActiveDocumentText: vi.fn().mockReturnValue(ok('# Test')),
+		getCurrentDocumentText: vi.fn().mockResolvedValue(ok('# Test')),
 		replaceDocumentText: vi.fn().mockResolvedValue(ok(undefined)),
 		...overrides,
 	}) as unknown as VscodeDocumentClient;
@@ -104,7 +105,7 @@ describe('MarkdownTaskRepository', () => {
 		it('ドキュメントがない場合はエラーを返す', async () => {
 			const markdownClient = createMockMarkdownTaskClient();
 			const documentClient = createMockVscodeDocumentClient({
-				getActiveDocumentText: vi.fn().mockReturnValue({
+				getCurrentDocumentText: vi.fn().mockResolvedValue({
 					isErr: () => true,
 					isOk: () => false,
 					error: { message: 'No document' },

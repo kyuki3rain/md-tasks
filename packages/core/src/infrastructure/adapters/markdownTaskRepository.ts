@@ -1,11 +1,13 @@
 import { err, ok, type Result } from 'neverthrow';
 import { Task } from '../../domain/entities/task';
+import { NoActiveEditorError } from '../../domain/errors/noActiveEditorError';
 import { TaskNotFoundError } from '../../domain/errors/taskNotFoundError';
 import { TaskParseError } from '../../domain/errors/taskParseError';
 import type { TaskRepository } from '../../domain/ports/taskRepository';
 import type { Path } from '../../domain/valueObjects/path';
 import type { MarkdownTaskClient, ParsedTask } from '../clients/markdownTaskClient';
 import type { VscodeDocumentClient } from '../clients/vscodeDocumentClient';
+import { NoActiveEditorError as InfraNoActiveEditorError } from '../clients/vscodeDocumentClient';
 
 /**
  * MarkdownTaskRepository
@@ -20,9 +22,13 @@ export class MarkdownTaskRepository implements TaskRepository {
 	/**
 	 * 全タスクを取得する
 	 */
-	async findAll(): Promise<Result<Task[], TaskParseError>> {
-		const textResult = this.documentClient.getActiveDocumentText();
+	async findAll(): Promise<Result<Task[], TaskParseError | NoActiveEditorError>> {
+		const textResult = await this.documentClient.getCurrentDocumentText();
 		if (textResult.isErr()) {
+			// NoActiveEditorErrorの場合はドメイン層のエラーに変換
+			if (textResult.error instanceof InfraNoActiveEditorError) {
+				return err(new NoActiveEditorError());
+			}
 			return err(new TaskParseError(0, textResult.error.message));
 		}
 
@@ -38,7 +44,9 @@ export class MarkdownTaskRepository implements TaskRepository {
 	/**
 	 * IDでタスクを取得する
 	 */
-	async findById(id: string): Promise<Result<Task, TaskNotFoundError | TaskParseError>> {
+	async findById(
+		id: string,
+	): Promise<Result<Task, TaskNotFoundError | TaskParseError | NoActiveEditorError>> {
 		const allResult = await this.findAll();
 		if (allResult.isErr()) {
 			return err(allResult.error);
@@ -55,7 +63,7 @@ export class MarkdownTaskRepository implements TaskRepository {
 	/**
 	 * パスでタスクをフィルタリングして取得する
 	 */
-	async findByPath(path: Path): Promise<Result<Task[], TaskParseError>> {
+	async findByPath(path: Path): Promise<Result<Task[], TaskParseError | NoActiveEditorError>> {
 		const allResult = await this.findAll();
 		if (allResult.isErr()) {
 			return err(allResult.error);
@@ -68,9 +76,12 @@ export class MarkdownTaskRepository implements TaskRepository {
 	/**
 	 * タスクを保存する（作成または更新）
 	 */
-	async save(task: Task): Promise<Result<Task, TaskNotFoundError>> {
-		const textResult = this.documentClient.getActiveDocumentText();
+	async save(task: Task): Promise<Result<Task, TaskNotFoundError | NoActiveEditorError>> {
+		const textResult = await this.documentClient.getCurrentDocumentText();
 		if (textResult.isErr()) {
+			if (textResult.error instanceof InfraNoActiveEditorError) {
+				return err(new NoActiveEditorError());
+			}
 			return err(new TaskNotFoundError(task.id));
 		}
 
@@ -108,6 +119,9 @@ export class MarkdownTaskRepository implements TaskRepository {
 
 		const writeResult = await this.documentClient.replaceDocumentText(editResult.value);
 		if (writeResult.isErr()) {
+			if (writeResult.error instanceof InfraNoActiveEditorError) {
+				return err(new NoActiveEditorError());
+			}
 			return err(new TaskNotFoundError(task.id));
 		}
 
@@ -117,9 +131,12 @@ export class MarkdownTaskRepository implements TaskRepository {
 	/**
 	 * タスクを削除する
 	 */
-	async delete(id: string): Promise<Result<void, TaskNotFoundError>> {
-		const textResult = this.documentClient.getActiveDocumentText();
+	async delete(id: string): Promise<Result<void, TaskNotFoundError | NoActiveEditorError>> {
+		const textResult = await this.documentClient.getCurrentDocumentText();
 		if (textResult.isErr()) {
+			if (textResult.error instanceof InfraNoActiveEditorError) {
+				return err(new NoActiveEditorError());
+			}
 			return err(new TaskNotFoundError(id));
 		}
 
@@ -145,6 +162,9 @@ export class MarkdownTaskRepository implements TaskRepository {
 
 		const writeResult = await this.documentClient.replaceDocumentText(editResult.value);
 		if (writeResult.isErr()) {
+			if (writeResult.error instanceof InfraNoActiveEditorError) {
+				return err(new NoActiveEditorError());
+			}
 			return err(new TaskNotFoundError(id));
 		}
 
@@ -154,9 +174,12 @@ export class MarkdownTaskRepository implements TaskRepository {
 	/**
 	 * 利用可能なパス（見出し階層）を全て取得する
 	 */
-	async getAvailablePaths(): Promise<Result<Path[], TaskParseError>> {
-		const textResult = this.documentClient.getActiveDocumentText();
+	async getAvailablePaths(): Promise<Result<Path[], TaskParseError | NoActiveEditorError>> {
+		const textResult = await this.documentClient.getCurrentDocumentText();
 		if (textResult.isErr()) {
+			if (textResult.error instanceof InfraNoActiveEditorError) {
+				return err(new NoActiveEditorError());
+			}
 			return err(new TaskParseError(0, textResult.error.message));
 		}
 

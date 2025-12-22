@@ -1,5 +1,6 @@
 import type { Result } from 'neverthrow';
 import type { Task, TaskMetadata } from '../../domain/entities/task';
+import type { NoActiveEditorError } from '../../domain/errors/noActiveEditorError';
 import type { TaskNotFoundError } from '../../domain/errors/taskNotFoundError';
 import type { TaskParseError } from '../../domain/errors/taskParseError';
 import type { TaskRepository } from '../../domain/ports/taskRepository';
@@ -24,7 +25,9 @@ export class UpdateTaskUseCase {
 	/**
 	 * タスクを更新する
 	 */
-	async execute(input: UpdateTaskInput): Promise<Result<Task, TaskNotFoundError | TaskParseError>> {
+	async execute(
+		input: UpdateTaskInput,
+	): Promise<Result<Task, TaskNotFoundError | TaskParseError | NoActiveEditorError>> {
 		// タスクを取得
 		const findResult = await this.taskRepository.findById(input.id);
 		if (findResult.isErr()) {

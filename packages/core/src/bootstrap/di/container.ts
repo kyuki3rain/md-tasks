@@ -175,6 +175,13 @@ export class Container {
 	getConfigController(): ConfigController {
 		return this.configController;
 	}
+
+	/**
+	 * VscodeDocumentClientを取得
+	 */
+	getVscodeDocumentClient(): VscodeDocumentClient {
+		return this.vscodeDocumentClient;
+	}
 }
 
 /**

@@ -1,4 +1,5 @@
 import type { Result } from 'neverthrow';
+import type { NoActiveEditorError } from '../../domain/errors/noActiveEditorError';
 import type { TaskNotFoundError } from '../../domain/errors/taskNotFoundError';
 import type { TaskRepository } from '../../domain/ports/taskRepository';
 
@@ -11,7 +12,7 @@ export class DeleteTaskUseCase {
 	/**
 	 * タスクを削除する
 	 */
-	async execute(id: string): Promise<Result<void, TaskNotFoundError>> {
+	async execute(id: string): Promise<Result<void, TaskNotFoundError | NoActiveEditorError>> {
 		return this.taskRepository.delete(id);
 	}
 }

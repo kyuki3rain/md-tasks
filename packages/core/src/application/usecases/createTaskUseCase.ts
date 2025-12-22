@@ -1,5 +1,6 @@
 import type { Result } from 'neverthrow';
 import { Task, type TaskMetadata } from '../../domain/entities/task';
+import type { NoActiveEditorError } from '../../domain/errors/noActiveEditorError';
 import type { TaskNotFoundError } from '../../domain/errors/taskNotFoundError';
 import type { ConfigProvider } from '../../domain/ports/configProvider';
 import type { TaskRepository } from '../../domain/ports/taskRepository';
@@ -28,7 +29,9 @@ export class CreateTaskUseCase {
 	/**
 	 * 新しいタスクを作成する
 	 */
-	async execute(input: CreateTaskInput): Promise<Result<Task, TaskNotFoundError>> {
+	async execute(
+		input: CreateTaskInput,
+	): Promise<Result<Task, TaskNotFoundError | NoActiveEditorError>> {
 		const config = await this.configProvider.getConfig();
 
 		// ステータスが指定されていない場合はデフォルトステータスを使用

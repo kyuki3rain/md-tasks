@@ -142,7 +142,12 @@ export class WebViewMessageHandler {
 	 * エラーを送信する
 	 */
 	private sendError(error: Error & { _tag?: string }): void {
-		logger.error(`Error: ${error.message}`, { errorType: error._tag, message: error.message });
+		// NoActiveEditorErrorは正常な状態遷移の一つなのでdebugレベルでログ出力
+		if (error._tag === 'NoActiveEditorError') {
+			logger.debug(`No active editor: ${error.message}`);
+		} else {
+			logger.error(`Error: ${error.message}`, { errorType: error._tag, message: error.message });
+		}
 		this.messageClient.sendError(error.message, error._tag);
 	}
 }

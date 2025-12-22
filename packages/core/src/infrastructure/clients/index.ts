@@ -16,6 +16,7 @@ export {
 	DocumentEditError,
 	type DocumentInfo,
 	DocumentNotFoundError,
+	NoActiveEditorError,
 	VscodeDocumentClient,
 	type VscodeDocumentDeps,
 } from './vscodeDocumentClient';

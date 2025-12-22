@@ -1,7 +1,12 @@
 const esbuild = require("esbuild");
+const path = require("node:path");
 
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
+
+// このファイルがあるディレクトリ（packages/core）を基準にパスを解決
+const coreDir = __dirname;
+const rootDir = path.resolve(coreDir, '../..');
 
 /**
  * @type {import('esbuild').Plugin}
@@ -26,7 +31,7 @@ const esbuildProblemMatcherPlugin = {
 async function main() {
 	const ctx = await esbuild.context({
 		entryPoints: [
-			'src/extension.ts'
+			path.join(coreDir, 'src/extension.ts')
 		],
 		bundle: true,
 		format: 'cjs',
@@ -34,7 +39,7 @@ async function main() {
 		sourcemap: !production,
 		sourcesContent: false,
 		platform: 'node',
-		outfile: 'dist/extension.js',
+		outfile: path.join(rootDir, 'dist/extension.js'),
 		external: ['vscode'],
 		logLevel: 'silent',
 		plugins: [

@@ -40,6 +40,6 @@
     }
   },
   "files": {
-    "includes": ["src/**/*.ts", "src/**/*.tsx"]
+    "includes": ["packages/*/src/**/*.ts", "packages/*/src/**/*.tsx"]
   }
 }

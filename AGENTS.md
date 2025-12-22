@@ -33,7 +33,7 @@
 |------|------|
 | 言語 | TypeScript（strict mode） |
 | ランタイム | Node.js 24 |
-| パッケージマネージャ | pnpm |
+| パッケージマネージャ | pnpm (workspace) |
 | WebView UI | React |
 | CSSフレームワーク | Tailwind CSS v4 |
 | UIコンポーネント | shadcn/ui |
@@ -92,8 +92,8 @@ pnpm run test:e2e
 # ウォッチモード（Extension + WebView）
 pnpm run watch
 
-# WebViewのみ開発サーバー
-cd src/webview && pnpm run dev
+# WebViewのみウォッチモード
+pnpm --filter @markdown-kanban/webview run watch
 ```
 
 ### パッケージング
@@ -107,23 +107,33 @@ pnpm run package
 
 ## アーキテクチャ
 
-クリーンアーキテクチャを採用。依存関係は内側から外側への一方向のみ許可。
+pnpm workspaceを使った2パッケージ構成。クリーンアーキテクチャを採用し、依存関係は内側から外側への一方向のみ許可。
 
 ```
-src/
-├── domain/           # ドメイン層（ビジネスルールの中核）
-│   └── ports/        # Port（インターフェース定義）
-├── application/      # アプリケーション層（ユースケース）
-│   └── ports/        # Port（インターフェース定義）
-├── interface/        # インターフェース層（外部リクエスト受付）
-│   ├── adapters/     # Adapter（Portの実装）
-│   └── clients/      # Client（WebView通信等）
-├── infrastructure/   # インフラストラクチャ層（外部システム連携）
-│   ├── adapters/     # Adapter（Portの実装）
-│   └── clients/      # Client（remark, VSCode API等のラッパー）
-├── bootstrap/        # ブートストラップ層（エントリーポイント、DI）
-├── shared/           # 共有ユーティリティ
-└── webview/          # WebView（React、別構成）
+markdown-kanban/
+├── packages/
+│   ├── core/              # Extension本体（@markdown-kanban/core）
+│   │   ├── src/
+│   │   │   ├── domain/           # ドメイン層（ビジネスルールの中核）
+│   │   │   │   └── ports/        # Port（インターフェース定義）
+│   │   │   ├── application/      # アプリケーション層（ユースケース）
+│   │   │   │   └── ports/        # Port（インターフェース定義）
+│   │   │   ├── interface/        # インターフェース層（外部リクエスト受付）
+│   │   │   │   ├── adapters/     # Adapter（Portの実装）
+│   │   │   │   └── clients/      # Client（WebView通信等）
+│   │   │   ├── infrastructure/   # インフラストラクチャ層（外部システム連携）
+│   │   │   │   ├── adapters/     # Adapter（Portの実装）
+│   │   │   │   └── clients/      # Client（remark, VSCode API等のラッパー）
+│   │   │   ├── bootstrap/        # ブートストラップ層（エントリーポイント、DI）
+│   │   │   └── shared/           # 共有ユーティリティ
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   └── webview/           # WebView（@markdown-kanban/webview）
+│       ├── src/
+│       ├── package.json
+│       └── vite.config.ts
+├── package.json           # ルート（VSCode extension メタデータ）
+└── pnpm-workspace.yaml
 ```
 
 ### Port / Adapter / Client
@@ -268,8 +278,8 @@ src/
 ## 注意事項
 
 - `docs/CONSTITUTION.md` の技術原則は不変。変更が必要な場合はユーザーに確認すること
-- 現在はサンプルコード状態。実装開始時にディレクトリ構造を整備する必要がある
-- WebViewはExtension本体と別のビルド構成になる
+- pnpm workspaceを使用。`packages/core`（Extension本体）と`packages/webview`（WebView UI）の2パッケージ構成
+- WebViewはExtension本体と別のビルド構成。ビルド出力はルートの`dist/`に配置される
 
 ---
 

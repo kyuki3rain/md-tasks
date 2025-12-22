@@ -44,7 +44,21 @@
       "command": "devbox",
       "args": ["run", "--", "pnpm", "--filter", "@markdown-kanban/webview", "run", "watch"],
       "group": "build",
-      "problemMatcher": [],
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": {
+          "regexp": "^$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^build started",
+          "endsPattern": "^built in"
+        }
+      },
       "isBackground": true,
       "presentation": { "group": "watch", "reveal": "never" }
     },

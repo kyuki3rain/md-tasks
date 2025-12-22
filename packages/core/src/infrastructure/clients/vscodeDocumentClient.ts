@@ -50,6 +50,7 @@ export interface VscodeDocumentDeps {
 		endLine: number,
 		endCharacter: number,
 	): vscode.Range;
+	validateRange(document: vscode.TextDocument, range: vscode.Range): vscode.Range;
 }
 
 /**
@@ -167,12 +168,18 @@ export class VscodeDocumentClient {
 		// ドキュメントを開いてテキストと行数を取得
 		try {
 			const document = await this.deps.openTextDocument(uri);
-			const lineCount = document.lineCount;
-			const lastLine = lineCount > 0 ? lineCount - 1 : 0;
-			const lastLineText = document.getText().split('\n')[lastLine] ?? '';
 
+			// ドキュメント全体を置換するためのRangeを作成
+			// validateRangeを使用して、VSCodeに正しいRangeを計算させる
+			// これにより、CRLF改行や末尾改行の問題を回避できる
 			const edit = this.deps.createWorkspaceEdit();
-			const fullRange = this.deps.createRange(0, 0, lastLine, lastLineText.length);
+			const maxRange = this.deps.createRange(
+				0,
+				0,
+				Number.MAX_SAFE_INTEGER,
+				Number.MAX_SAFE_INTEGER,
+			);
+			const fullRange = this.deps.validateRange(document, maxRange);
 			edit.replace(uri, fullRange, newText);
 
 			const success = await this.deps.applyEdit(edit);

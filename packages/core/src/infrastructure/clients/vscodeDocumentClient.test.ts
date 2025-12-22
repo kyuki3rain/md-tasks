@@ -28,10 +28,13 @@ const createMockRange = (
 
 const createMockDeps = (overrides: Partial<VscodeDocumentDeps> = {}): VscodeDocumentDeps => ({
 	getActiveTextEditor: vi.fn().mockReturnValue(undefined),
-	openTextDocument: vi.fn().mockResolvedValue({ getText: () => '' }),
+	openTextDocument: vi
+		.fn()
+		.mockResolvedValue({ getText: () => '', validateRange: (r: vscode.Range) => r }),
 	applyEdit: vi.fn().mockResolvedValue(true),
 	createWorkspaceEdit: vi.fn().mockReturnValue({ replace: vi.fn() }),
 	createRange: vi.fn().mockImplementation(createMockRange),
+	validateRange: vi.fn().mockImplementation((_doc, range) => range),
 	...overrides,
 });
 
@@ -145,6 +148,7 @@ describe('VscodeDocumentClient', () => {
 
 			const deps = createMockDeps({
 				getActiveTextEditor: vi.fn().mockReturnValue(mockEditor),
+				openTextDocument: vi.fn().mockResolvedValue(mockDocument),
 				createWorkspaceEdit: vi.fn().mockReturnValue({ replace: mockReplace }),
 				applyEdit: vi.fn().mockResolvedValue(true),
 			});
@@ -172,8 +176,9 @@ describe('VscodeDocumentClient', () => {
 		});
 
 		it('編集に失敗した場合はエラーを返す', async () => {
+			const mockUri = createMockUri('/test/file.md');
 			const mockDocument = {
-				uri: createMockUri('/test/file.md'),
+				uri: mockUri,
 				getText: () => 'text',
 				languageId: 'markdown',
 				lineCount: 1,
@@ -182,6 +187,7 @@ describe('VscodeDocumentClient', () => {
 
 			const deps = createMockDeps({
 				getActiveTextEditor: vi.fn().mockReturnValue(mockEditor),
+				openTextDocument: vi.fn().mockResolvedValue(mockDocument),
 				applyEdit: vi.fn().mockResolvedValue(false),
 			});
 			const client = new VscodeDocumentClient(deps);

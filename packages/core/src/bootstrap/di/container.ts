@@ -78,6 +78,7 @@ export class Container {
 			createWorkspaceEdit: () => new vscode.WorkspaceEdit(),
 			createRange: (startLine, startCharacter, endLine, endCharacter) =>
 				new vscode.Range(startLine, startCharacter, endLine, endCharacter),
+			validateRange: (document, range) => document.validateRange(range),
 		});
 
 		// VscodeConfigClient

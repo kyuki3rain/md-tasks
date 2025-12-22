@@ -11,52 +11,56 @@
       "label": "watch",
       "dependsOn": [
         "ensure-test-workspace",
-        "npm: watch:tsc",
-        "npm: watch:esbuild"
+        "watch:core:tsc",
+        "watch:core:esbuild",
+        "watch:webview"
       ],
       "presentation": { "reveal": "never" },
       "group": { "kind": "build", "isDefault": true }
     },
-
     {
-      "label": "npm: watch:esbuild",
+      "label": "watch:core:esbuild",
       "type": "shell",
       "command": "devbox",
-      "args": ["run", "--", "pnpm", "run", "watch:esbuild"],
+      "args": ["run", "--", "node", "packages/core/esbuild.js", "--watch"],
       "group": "build",
       "problemMatcher": "$esbuild-watch",
       "isBackground": true,
       "presentation": { "group": "watch", "reveal": "never" }
     },
-
     {
-      "label": "npm: watch:tsc",
+      "label": "watch:core:tsc",
       "type": "shell",
       "command": "devbox",
-      "args": ["run", "--", "pnpm", "run", "watch:tsc"],
+      "args": ["run", "--", "pnpm", "--filter", "@markdown-kanban/core", "run", "check-types:watch"],
       "group": "build",
       "problemMatcher": "$tsc-watch",
       "isBackground": true,
       "presentation": { "group": "watch", "reveal": "never" }
     },
-
     {
-      "label": "npm: watch-tests",
+      "label": "watch:webview",
       "type": "shell",
       "command": "devbox",
-      "args": ["run", "--", "pnpm", "run", "watch-tests"],
+      "args": ["run", "--", "pnpm", "--filter", "@markdown-kanban/webview", "run", "watch"],
+      "group": "build",
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": { "group": "watch", "reveal": "never" }
+    },
+    {
+      "label": "watch-tests",
+      "type": "shell",
+      "command": "devbox",
+      "args": ["run", "--", "node", "packages/core/esbuild.e2e.js", "--watch"],
       "group": "build",
       "problemMatcher": "$tsc-watch",
       "isBackground": true,
       "presentation": { "reveal": "never", "group": "watchers" }
     },
-
     {
       "label": "tasks: watch-tests",
-      "dependsOn": [
-        "watch",
-        "npm: watch-tests"
-      ],
+      "dependsOn": ["watch", "watch-tests"],
       "problemMatcher": []
     }
   ]

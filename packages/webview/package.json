@@ -1,11 +1,11 @@
 {
-  "name": "markdown-kanban-webview",
+  "name": "@markdown-kanban/webview",
   "private": true,
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "vite",
     "build": "tsc -b && vite build",
+    "watch": "vite build --watch",
     "preview": "vite preview"
   },
   "dependencies": {

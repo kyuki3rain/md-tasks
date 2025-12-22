@@ -12,7 +12,7 @@ async function main() {
 		bundle: true,
 		format: 'cjs',  // CommonJS出力（VSCode E2Eテストランナー用）
 		platform: 'node',
-		outdir: 'out/test',
+		outdir: '../../out/test',
 		outbase: 'src/test',
 		external: ['vscode', 'mocha'],  // VSCodeとMochaは外部依存
 		sourcemap: true,

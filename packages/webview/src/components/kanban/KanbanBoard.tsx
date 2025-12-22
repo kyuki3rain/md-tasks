@@ -105,17 +105,14 @@ export function KanbanBoard() {
 	const handleSaveTask = useCallback(
 		(data: { title: string; status: string; path: string[]; metadata?: TaskMetadata }) => {
 			if (modal.task) {
-				// 編集
+				// 編集（ステータスも含めて一括更新）
 				actions.updateTask({
 					id: modal.task.id,
 					title: data.title,
 					path: data.path,
+					status: data.status,
 					metadata: data.metadata,
 				});
-				// ステータスが変わった場合
-				if (modal.task.status !== data.status) {
-					actions.changeTaskStatus(modal.task.id, data.status);
-				}
 			} else {
 				// 新規作成
 				actions.createTask({

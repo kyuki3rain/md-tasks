@@ -34,6 +34,7 @@ export interface UpdateTaskDto {
 	id: string;
 	title?: string;
 	path?: string[];
+	status?: string;
 	metadata?: TaskMetadata;
 }
 
@@ -90,11 +91,14 @@ export class TaskController {
 	 */
 	async updateTask(
 		dto: UpdateTaskDto,
-	): Promise<Result<TaskDto, TaskNotFoundError | TaskParseError | NoActiveEditorError>> {
+	): Promise<
+		Result<TaskDto, TaskNotFoundError | TaskParseError | InvalidStatusError | NoActiveEditorError>
+	> {
 		const input: UpdateTaskInput = {
 			id: dto.id,
 			title: dto.title,
 			path: dto.path ? Path.create(dto.path) : undefined,
+			status: dto.status,
 			metadata: dto.metadata,
 		};
 

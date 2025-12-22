@@ -227,7 +227,13 @@ export function useKanban() {
 	);
 
 	const updateTask = useCallback(
-		(params: { id: string; title?: string; path?: string[]; metadata?: TaskMetadata }) => {
+		(params: {
+			id: string;
+			title?: string;
+			path?: string[];
+			status?: string;
+			metadata?: TaskMetadata;
+		}) => {
 			postMessage({ type: 'UPDATE_TASK', payload: params });
 		},
 		[postMessage],

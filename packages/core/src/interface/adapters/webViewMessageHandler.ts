@@ -88,12 +88,14 @@ export class WebViewMessageHandler {
 		id: string;
 		title?: string;
 		path?: string[];
+		status?: string;
 		metadata?: Record<string, string>;
 	}): Promise<void> {
 		const result = await this.taskController.updateTask({
 			id: payload.id,
 			title: payload.title,
 			path: payload.path,
+			status: payload.status,
 			metadata: payload.metadata,
 		});
 

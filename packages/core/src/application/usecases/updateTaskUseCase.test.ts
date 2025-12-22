@@ -2,6 +2,7 @@ import { err, ok } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
 import { Task } from '../../domain/entities/task';
 import { TaskNotFoundError } from '../../domain/errors/taskNotFoundError';
+import type { ConfigProvider, KanbanConfig } from '../../domain/ports/configProvider';
 import type { TaskRepository } from '../../domain/ports/taskRepository';
 import { Path } from '../../domain/valueObjects/path';
 import { Status } from '../../domain/valueObjects/status';
@@ -15,6 +16,23 @@ describe('UpdateTaskUseCase', () => {
 		save: vi.fn(),
 		delete: vi.fn(),
 		getAvailablePaths: vi.fn(),
+		...overrides,
+	});
+
+	const defaultConfig: KanbanConfig = {
+		statuses: ['todo', 'in-progress', 'done'],
+		doneStatuses: ['done'],
+		defaultStatus: 'todo',
+		defaultDoneStatus: 'done',
+		sortBy: 'markdown',
+		syncCheckboxWithDone: true,
+	};
+
+	const createMockConfigProvider = (overrides: Partial<ConfigProvider> = {}): ConfigProvider => ({
+		getConfig: vi.fn().mockResolvedValue(defaultConfig),
+		get: vi
+			.fn()
+			.mockImplementation((key: keyof KanbanConfig) => Promise.resolve(defaultConfig[key])),
 		...overrides,
 	});
 
@@ -45,8 +63,9 @@ describe('UpdateTaskUseCase', () => {
 				findById: vi.fn().mockResolvedValue(ok(existingTask)),
 				save: vi.fn().mockResolvedValue(ok(updatedTask)),
 			});
+			const configProvider = createMockConfigProvider();
 
-			const useCase = new UpdateTaskUseCase(repository);
+			const useCase = new UpdateTaskUseCase(repository, configProvider);
 			const result = await useCase.execute({
 				id: '1',
 				title: 'New Title',
@@ -65,8 +84,9 @@ describe('UpdateTaskUseCase', () => {
 				findById: vi.fn().mockResolvedValue(ok(existingTask)),
 				save: vi.fn().mockResolvedValue(ok(updatedTask)),
 			});
+			const configProvider = createMockConfigProvider();
 
-			const useCase = new UpdateTaskUseCase(repository);
+			const useCase = new UpdateTaskUseCase(repository, configProvider);
 			const result = await useCase.execute({
 				id: '1',
 				metadata: newMetadata,
@@ -85,8 +105,9 @@ describe('UpdateTaskUseCase', () => {
 				findById: vi.fn().mockResolvedValue(ok(existingTask)),
 				save: vi.fn().mockResolvedValue(ok(updatedTask)),
 			});
+			const configProvider = createMockConfigProvider();
 
-			const useCase = new UpdateTaskUseCase(repository);
+			const useCase = new UpdateTaskUseCase(repository, configProvider);
 			const result = await useCase.execute({
 				id: '1',
 				path: newPath,
@@ -101,8 +122,9 @@ describe('UpdateTaskUseCase', () => {
 			const repository = createMockTaskRepository({
 				findById: vi.fn().mockResolvedValue(err(notFoundError)),
 			});
+			const configProvider = createMockConfigProvider();
 
-			const useCase = new UpdateTaskUseCase(repository);
+			const useCase = new UpdateTaskUseCase(repository, configProvider);
 			const result = await useCase.execute({
 				id: 'non-existent',
 				title: 'New Title',
@@ -121,8 +143,9 @@ describe('UpdateTaskUseCase', () => {
 				findById: vi.fn().mockResolvedValue(ok(existingTask)),
 				save: vi.fn().mockImplementation((task) => Promise.resolve(ok(task))),
 			});
+			const configProvider = createMockConfigProvider();
 
-			const useCase = new UpdateTaskUseCase(repository);
+			const useCase = new UpdateTaskUseCase(repository, configProvider);
 			const result = await useCase.execute({
 				id: '1',
 				title: 'New Title',
@@ -135,6 +158,47 @@ describe('UpdateTaskUseCase', () => {
 			expect(task.title).toBe('New Title');
 			expect(task.path.equals(newPath)).toBe(true);
 			expect(task.metadata).toEqual(newMetadata);
+		});
+
+		it('タスクのステータスを更新できる', async () => {
+			const existingTask = createTask('1', 'Task', 'todo');
+
+			const repository = createMockTaskRepository({
+				findById: vi.fn().mockResolvedValue(ok(existingTask)),
+				save: vi.fn().mockImplementation((task) => Promise.resolve(ok(task))),
+			});
+			const configProvider = createMockConfigProvider();
+
+			const useCase = new UpdateTaskUseCase(repository, configProvider);
+			const result = await useCase.execute({
+				id: '1',
+				status: 'in-progress',
+			});
+
+			expect(result.isOk()).toBe(true);
+			const task = result._unsafeUnwrap();
+			expect(task.status.value).toBe('in-progress');
+		});
+
+		it('ステータスをdoneに変更するとチェックボックスが連動する', async () => {
+			const existingTask = createTask('1', 'Task', 'todo');
+
+			const repository = createMockTaskRepository({
+				findById: vi.fn().mockResolvedValue(ok(existingTask)),
+				save: vi.fn().mockImplementation((task) => Promise.resolve(ok(task))),
+			});
+			const configProvider = createMockConfigProvider();
+
+			const useCase = new UpdateTaskUseCase(repository, configProvider);
+			const result = await useCase.execute({
+				id: '1',
+				status: 'done',
+			});
+
+			expect(result.isOk()).toBe(true);
+			const task = result._unsafeUnwrap();
+			expect(task.status.value).toBe('done');
+			expect(task.isChecked).toBe(true);
 		});
 	});
 });

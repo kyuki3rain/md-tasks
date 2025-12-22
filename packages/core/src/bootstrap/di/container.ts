@@ -121,7 +121,10 @@ export class Container {
 		);
 
 		// UpdateTaskUseCase
-		this.updateTaskUseCase = new UpdateTaskUseCase(this.markdownTaskRepository);
+		this.updateTaskUseCase = new UpdateTaskUseCase(
+			this.markdownTaskRepository,
+			this.frontmatterConfigProvider,
+		);
 
 		// DeleteTaskUseCase
 		this.deleteTaskUseCase = new DeleteTaskUseCase(this.markdownTaskRepository);

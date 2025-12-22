@@ -46,6 +46,7 @@ export interface UpdateTaskRequest {
 		id: string;
 		title?: string;
 		path?: string[];
+		status?: string;
 		metadata?: TaskMetadata;
 	};
 }

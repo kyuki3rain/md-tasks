@@ -71,6 +71,8 @@ export interface TaskEdit {
 	newStatus?: Status;
 	/** 新しいタイトル */
 	newTitle?: string;
+	/** 新しいパス（見出し階層） */
+	newPath?: Path;
 	/** 削除フラグ */
 	delete?: boolean;
 	/** 新規作成情報 */
@@ -512,6 +514,11 @@ export class MarkdownTaskClient {
 		task: ParsedTask,
 		edit: TaskEdit,
 	): Result<string, SerializerError> {
+		// パス変更がある場合は特別な処理
+		if (edit.newPath && !edit.newPath.equals(task.path)) {
+			return this.moveTask(markdown, task, edit);
+		}
+
 		const lines = markdown.split('\n');
 
 		// タイトル更新
@@ -559,6 +566,124 @@ export class MarkdownTaskClient {
 		}
 
 		return ok(lines.join('\n'));
+	}
+
+	/**
+	 * タスクを別のパスに移動する
+	 */
+	private moveTask(
+		markdown: string,
+		task: ParsedTask,
+		edit: TaskEdit,
+	): Result<string, SerializerError> {
+		const newPath = edit.newPath;
+		if (!newPath) {
+			return err(new SerializerError('移動先パスが指定されていません'));
+		}
+
+		// パースして見出しを取得
+		const parseResult = this.parse(markdown);
+		if (parseResult.isErr()) {
+			return err(new SerializerError('Markdownのパースに失敗しました'));
+		}
+
+		const { headings } = parseResult.value;
+
+		// ルート以外のパスの場合、見出しが存在するか確認
+		if (!newPath.isRoot()) {
+			const headingExists = headings.some((h) => h.equals(newPath));
+			if (!headingExists) {
+				return err(new SerializerError(`見出しが見つかりません: ${newPath.toString()}`));
+			}
+		}
+
+		// タスクの元のテキストを取得（メタデータを含む全行）
+		const lines = markdown.split('\n');
+		const taskLines = lines.slice(task.startLine - 1, task.endLine);
+
+		// タイトル変更があれば適用
+		if (edit.newTitle) {
+			const checkboxPattern = /^(\s*-\s*\[[ xX]\]\s*)(.+)$/;
+			const match = taskLines[0].match(checkboxPattern);
+			if (match) {
+				taskLines[0] = match[1] + edit.newTitle;
+			}
+		}
+
+		// ステータス変更があれば適用
+		if (edit.newStatus) {
+			const isDone = edit.doneStatuses?.includes(edit.newStatus.value) ?? false;
+
+			// チェックボックスを更新
+			if (isDone) {
+				taskLines[0] = taskLines[0].replace(/\[[ ]\]/, '[x]');
+			} else {
+				taskLines[0] = taskLines[0].replace(/\[[xX]\]/, '[ ]');
+			}
+
+			// ステータス行を更新または追加
+			let statusLineIndex = -1;
+			for (let i = 1; i < taskLines.length; i++) {
+				if (taskLines[i].match(/^\s*-\s*status:\s*.+$/)) {
+					statusLineIndex = i;
+					break;
+				}
+			}
+
+			if (statusLineIndex >= 0) {
+				const indent = taskLines[statusLineIndex].match(/^(\s*)/)?.[1] ?? '  ';
+				taskLines[statusLineIndex] = `${indent}- status: ${edit.newStatus.value}`;
+			} else {
+				taskLines.splice(1, 0, `  - status: ${edit.newStatus.value}`);
+			}
+		}
+
+		// 元の場所からタスクを削除
+		const deleteCount = task.endLine - task.startLine + 1;
+		lines.splice(task.startLine - 1, deleteCount);
+
+		// 削除後のMarkdownを再パース
+		const deletedMarkdown = lines.join('\n');
+		const reParseResult = this.parse(deletedMarkdown);
+		if (reParseResult.isErr()) {
+			return err(new SerializerError('Markdownのパースに失敗しました'));
+		}
+
+		const { tasks: remainingTasks, headings: remainingHeadings } = reParseResult.value;
+		const remainingLines = deletedMarkdown.split('\n');
+
+		// 挿入位置を決定
+		let insertLine: number;
+
+		if (newPath.isRoot()) {
+			// ルートパスの場合
+			const rootTasks = remainingTasks.filter((t) => t.path.isRoot());
+			if (rootTasks.length > 0) {
+				const lastTask = rootTasks[rootTasks.length - 1];
+				insertLine = lastTask.endLine;
+			} else {
+				const firstHeadingLine = this.findFirstHeadingLine(remainingLines);
+				if (firstHeadingLine >= 0) {
+					insertLine = firstHeadingLine;
+				} else {
+					insertLine = remainingLines.length;
+				}
+			}
+		} else {
+			// パス配下のタスクを検索
+			const pathTasks = remainingTasks.filter((t) => t.path.equals(newPath));
+			if (pathTasks.length > 0) {
+				const lastTask = pathTasks[pathTasks.length - 1];
+				insertLine = lastTask.endLine;
+			} else {
+				insertLine = this.findInsertLineForPath(remainingLines, newPath, remainingHeadings);
+			}
+		}
+
+		// 新しい場所にタスクを挿入
+		remainingLines.splice(insertLine, 0, ...taskLines);
+
+		return ok(remainingLines.join('\n'));
 	}
 
 	/**

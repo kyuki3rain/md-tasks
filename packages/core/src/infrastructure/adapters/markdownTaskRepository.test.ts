@@ -290,6 +290,92 @@ describe('MarkdownTaskRepository', () => {
 				expect.objectContaining({ taskId: 'Test::Task 1' }),
 			);
 		});
+
+		it('タスクのパスを変更する', async () => {
+			const existingTask = {
+				id: 'Test::Task 1',
+				title: 'Task 1',
+				status: createStatus('todo'),
+				path: Path.create(['Test']),
+				isChecked: false,
+				metadata: {},
+				startLine: 2,
+				endLine: 3,
+			};
+
+			const markdownClient = createMockMarkdownTaskClient({
+				parse: vi.fn().mockReturnValue(
+					ok({
+						tasks: [existingTask],
+						headings: [Path.create(['Test']), Path.create(['Other'])],
+						warnings: [],
+					}),
+				),
+				applyEdit: vi.fn().mockReturnValue(ok('# Other\n- [ ] Task 1\n  - status: todo')),
+			});
+			const documentClient = createMockVscodeDocumentClient();
+
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient);
+			const updatedTask = createMockTask({
+				id: 'Test::Task 1',
+				title: 'Task 1',
+				status: createStatus('todo'),
+				path: Path.create(['Other']),
+			});
+			const result = await repository.save(updatedTask);
+
+			expect(result.isOk()).toBe(true);
+			expect(markdownClient.applyEdit).toHaveBeenCalledWith(
+				expect.any(String),
+				expect.objectContaining({
+					taskId: 'Test::Task 1',
+					newPath: expect.objectContaining({ segments: ['Other'] }),
+				}),
+			);
+		});
+
+		it('パスが変更されていない場合はnewPathを渡さない', async () => {
+			const existingTask = {
+				id: 'Test::Task 1',
+				title: 'Task 1',
+				status: createStatus('todo'),
+				path: Path.create(['Test']),
+				isChecked: false,
+				metadata: {},
+				startLine: 2,
+				endLine: 3,
+			};
+
+			const markdownClient = createMockMarkdownTaskClient({
+				parse: vi.fn().mockReturnValue(
+					ok({
+						tasks: [existingTask],
+						headings: [],
+						warnings: [],
+					}),
+				),
+				applyEdit: vi.fn().mockReturnValue(ok('# Test\n- [x] Task 1\n  - status: done')),
+			});
+			const documentClient = createMockVscodeDocumentClient();
+
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient);
+			const updatedTask = createMockTask({
+				id: 'Test::Task 1',
+				title: 'Task 1',
+				status: createStatus('done'),
+				path: Path.create(['Test']), // 同じパス
+			});
+			const result = await repository.save(updatedTask);
+
+			expect(result.isOk()).toBe(true);
+			expect(markdownClient.applyEdit).toHaveBeenCalledWith(
+				expect.any(String),
+				expect.objectContaining({
+					taskId: 'Test::Task 1',
+					newPath: undefined,
+				}),
+			);
+		});
 	});
 
 	describe('delete', () => {

@@ -28,10 +28,13 @@ const createMockRange = (
 
 const createMockDeps = (overrides: Partial<VscodeDocumentDeps> = {}): VscodeDocumentDeps => ({
 	getActiveTextEditor: vi.fn().mockReturnValue(undefined),
-	openTextDocument: vi.fn().mockResolvedValue({ getText: () => '' }),
+	openTextDocument: vi
+		.fn()
+		.mockResolvedValue({ getText: () => '', save: () => Promise.resolve(true) }),
 	applyEdit: vi.fn().mockResolvedValue(true),
 	createWorkspaceEdit: vi.fn().mockReturnValue({ replace: vi.fn() }),
 	createRange: vi.fn().mockImplementation(createMockRange),
+	executeCommand: vi.fn().mockResolvedValue(undefined),
 	...overrides,
 });
 

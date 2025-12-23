@@ -78,6 +78,8 @@ export class Container {
 			createWorkspaceEdit: () => new vscode.WorkspaceEdit(),
 			createRange: (startLine, startCharacter, endLine, endCharacter) =>
 				new vscode.Range(startLine, startCharacter, endLine, endCharacter),
+			executeCommand: <T>(command: string, ...args: unknown[]) =>
+				vscode.commands.executeCommand<T>(command, ...args),
 		});
 
 		// VscodeConfigClient
@@ -162,7 +164,12 @@ export class Container {
 	 */
 	createWebViewMessageHandler(messageDeps: WebViewMessageDeps): WebViewMessageHandler {
 		const messageClient = new WebViewMessageClient(messageDeps);
-		return new WebViewMessageHandler(this.taskController, this.configController, messageClient);
+		return new WebViewMessageHandler(
+			this.taskController,
+			this.configController,
+			messageClient,
+			this.vscodeDocumentClient,
+		);
 	}
 
 	/**

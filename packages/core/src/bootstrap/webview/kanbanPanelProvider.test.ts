@@ -26,6 +26,7 @@ vi.mock('vscode', () => ({
 	},
 	workspace: {
 		onDidChangeTextDocument: vi.fn(() => ({ dispose: vi.fn() })),
+		onDidSaveTextDocument: vi.fn(() => ({ dispose: vi.fn() })),
 	},
 	ViewColumn: {
 		Beside: 2,
@@ -54,6 +55,10 @@ describe('KanbanPanelProvider', () => {
 			})),
 			getConfigController: vi.fn(() => ({
 				getConfig: vi.fn().mockResolvedValue({}),
+			})),
+			getVscodeDocumentClient: vi.fn(() => ({
+				setCurrentDocumentUri: vi.fn(),
+				getCurrentDocumentUri: vi.fn().mockReturnValue(undefined),
 			})),
 		} as unknown as Container;
 

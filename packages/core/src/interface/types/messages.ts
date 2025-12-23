@@ -80,6 +80,20 @@ export interface GetConfigRequest {
 }
 
 /**
+ * ドキュメント保存リクエスト
+ */
+export interface SaveDocumentRequest {
+	type: 'SAVE_DOCUMENT';
+}
+
+/**
+ * ドキュメント破棄リクエスト
+ */
+export interface RevertDocumentRequest {
+	type: 'REVERT_DOCUMENT';
+}
+
+/**
  * WebView → Extension の全メッセージタイプ
  */
 export type WebViewToExtensionMessage =
@@ -88,7 +102,9 @@ export type WebViewToExtensionMessage =
 	| UpdateTaskRequest
 	| DeleteTaskRequest
 	| ChangeTaskStatusRequest
-	| GetConfigRequest;
+	| GetConfigRequest
+	| SaveDocumentRequest
+	| RevertDocumentRequest;
 
 // =============================================================================
 // Extension → WebView メッセージ
@@ -156,6 +172,16 @@ export interface ErrorMessage {
 }
 
 /**
+ * ドキュメント状態変更メッセージ
+ */
+export interface DocumentStateChangedMessage {
+	type: 'DOCUMENT_STATE_CHANGED';
+	payload: {
+		isDirty: boolean;
+	};
+}
+
+/**
  * Extension → WebView の全メッセージタイプ
  */
 export type ExtensionToWebViewMessage =
@@ -164,7 +190,8 @@ export type ExtensionToWebViewMessage =
 	| TaskUpdatedMessage
 	| TaskDeletedMessage
 	| ConfigUpdatedMessage
-	| ErrorMessage;
+	| ErrorMessage
+	| DocumentStateChangedMessage;
 
 /**
  * 全メッセージタイプ

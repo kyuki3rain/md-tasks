@@ -1,3 +1,4 @@
+import type { VscodeDocumentClient } from '../../infrastructure/clients/vscodeDocumentClient';
 import { logger } from '../../shared';
 import type { WebViewMessageClient } from '../clients/webViewMessageClient';
 import type { WebViewToExtensionMessage } from '../types/messages';
@@ -13,6 +14,7 @@ export class WebViewMessageHandler {
 		private readonly taskController: TaskController,
 		private readonly configController: ConfigController,
 		private readonly messageClient: WebViewMessageClient,
+		private readonly documentClient?: VscodeDocumentClient,
 	) {}
 
 	/**
@@ -39,6 +41,12 @@ export class WebViewMessageHandler {
 				break;
 			case 'GET_CONFIG':
 				await this.handleGetConfig();
+				break;
+			case 'SAVE_DOCUMENT':
+				await this.handleSaveDocument();
+				break;
+			case 'REVERT_DOCUMENT':
+				await this.handleRevertDocument();
 				break;
 			default:
 				logger.error(`Unknown message type: ${(message as { type: string }).type}`);
@@ -138,6 +146,44 @@ export class WebViewMessageHandler {
 	private async handleGetConfig(): Promise<void> {
 		const config = await this.configController.getConfig();
 		this.messageClient.sendConfigUpdated(config);
+	}
+
+	/**
+	 * ドキュメント保存を処理する
+	 */
+	private async handleSaveDocument(): Promise<void> {
+		if (!this.documentClient) {
+			logger.error('Document client is not available');
+			this.messageClient.sendError('ドキュメントクライアントが利用できません');
+			return;
+		}
+
+		const result = await this.documentClient.saveDocument();
+
+		if (result.isErr()) {
+			this.sendError(result.error);
+		} else {
+			logger.info('Document saved successfully');
+		}
+	}
+
+	/**
+	 * ドキュメント破棄を処理する
+	 */
+	private async handleRevertDocument(): Promise<void> {
+		if (!this.documentClient) {
+			logger.error('Document client is not available');
+			this.messageClient.sendError('ドキュメントクライアントが利用できません');
+			return;
+		}
+
+		const result = await this.documentClient.revertDocument();
+
+		if (result.isErr()) {
+			this.sendError(result.error);
+		} else {
+			logger.info('Document reverted successfully');
+		}
 	}
 
 	/**

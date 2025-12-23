@@ -145,6 +145,7 @@ export class KanbanPanelProvider {
 				this.container.getVscodeDocumentClient().setCurrentDocumentUri(editor.document.uri);
 				logger.debug(`Current document URI updated: ${editor.document.uri.toString()}`);
 				await this.sendTasksUpdate();
+				this.sendDocumentStateUpdate(editor.document);
 			}
 		});
 		this.disposables.push(activeEditorChange);
@@ -162,9 +163,21 @@ export class KanbanPanelProvider {
 
 			if ((isCurrentDocument || isActiveDocument) && this.isMarkdownDocument(event.document)) {
 				await this.sendTasksUpdate();
+				this.sendDocumentStateUpdate(event.document);
 			}
 		});
 		this.disposables.push(documentChange);
+
+		// ドキュメント保存時
+		const documentSave = vscode.workspace.onDidSaveTextDocument((document) => {
+			const currentUri = this.container.getVscodeDocumentClient().getCurrentDocumentUri();
+			const isCurrentDocument = currentUri && document.uri.toString() === currentUri.toString();
+
+			if (isCurrentDocument && this.isMarkdownDocument(document)) {
+				this.sendDocumentStateUpdate(document);
+			}
+		});
+		this.disposables.push(documentSave);
 	}
 
 	/**
@@ -191,6 +204,21 @@ export class KanbanPanelProvider {
 				payload: { tasks: result.value },
 			});
 		}
+	}
+
+	/**
+	 * ドキュメント状態更新をWebViewに送信
+	 */
+	private sendDocumentStateUpdate(document: vscode.TextDocument): void {
+		if (!this.panel) {
+			return;
+		}
+
+		this.panel.webview.postMessage({
+			type: 'DOCUMENT_STATE_CHANGED',
+			payload: { isDirty: document.isDirty },
+		});
+		logger.debug(`Document state updated: isDirty=${document.isDirty}`);
 	}
 
 	/**

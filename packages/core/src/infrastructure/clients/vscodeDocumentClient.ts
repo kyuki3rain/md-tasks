@@ -50,6 +50,7 @@ export interface VscodeDocumentDeps {
 		endLine: number,
 		endCharacter: number,
 	): vscode.Range;
+	executeCommand<T>(command: string, ...args: unknown[]): Thenable<T | undefined>;
 }
 
 /**
@@ -201,6 +202,58 @@ export class VscodeDocumentClient {
 			return err(
 				new DocumentNotFoundError(
 					`ドキュメントを開けませんでした: ${error instanceof Error ? error.message : String(error)}`,
+				),
+			);
+		}
+	}
+
+	/**
+	 * 現在のドキュメントを保存する
+	 */
+	async saveDocument(): Promise<
+		Result<void, NoActiveEditorError | DocumentNotFoundError | DocumentEditError>
+	> {
+		// URIを取得
+		const uriResult = this.getCurrentDocumentUriOrActive();
+		if (uriResult.isErr()) {
+			return err(uriResult.error);
+		}
+		const uri = uriResult.value;
+
+		try {
+			const document = await this.deps.openTextDocument(uri);
+			const success = await document.save();
+			if (!success) {
+				return err(new DocumentEditError('ドキュメントの保存に失敗しました'));
+			}
+			return ok(undefined);
+		} catch (error) {
+			return err(
+				new DocumentNotFoundError(
+					`ドキュメントを保存できませんでした: ${error instanceof Error ? error.message : String(error)}`,
+				),
+			);
+		}
+	}
+
+	/**
+	 * 現在のドキュメントの変更を破棄する（revert）
+	 */
+	async revertDocument(): Promise<Result<void, NoActiveEditorError | DocumentEditError>> {
+		// URIを取得
+		const uriResult = this.getCurrentDocumentUriOrActive();
+		if (uriResult.isErr()) {
+			return err(uriResult.error);
+		}
+		const uri = uriResult.value;
+
+		try {
+			await this.deps.executeCommand('workbench.action.files.revert', uri);
+			return ok(undefined);
+		} catch (error) {
+			return err(
+				new DocumentEditError(
+					`ドキュメントの変更を破棄できませんでした: ${error instanceof Error ? error.message : String(error)}`,
 				),
 			);
 		}

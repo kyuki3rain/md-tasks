@@ -244,7 +244,7 @@ export function TaskModal({
 									'hover:bg-primary/90 transition-colors',
 								)}
 							>
-								{isEditMode ? 'Save' : 'Create'}
+								{isEditMode ? 'Update' : 'Create'}
 							</button>
 						</div>
 					</div>

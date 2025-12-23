@@ -101,6 +101,7 @@ export class MarkdownTaskRepository implements TaskRepository {
 				taskId: task.id,
 				newStatus: task.status,
 				newTitle: task.title !== existingTask.title ? task.title : undefined,
+				newPath: !task.path.equals(existingTask.path) ? task.path : undefined,
 			});
 		} else {
 			// 作成

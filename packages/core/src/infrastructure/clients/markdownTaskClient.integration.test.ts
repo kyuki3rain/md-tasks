@@ -522,8 +522,386 @@ kanban:
 				const updated = result._unsafeUnwrap();
 				expect(updated).toContain('status: in-progress');
 			});
+		});
 
-			// NOTE: パス変更機能（newPath）は将来実装予定
+		describe('パス変更', () => {
+			it('タスクのパスを変更できる（別の見出しに移動）', () => {
+				const markdown = `# 仕事
+- [ ] タスク1
+
+# 個人`;
+				const result = client.applyEdit(markdown, {
+					taskId: '仕事::タスク1',
+					newPath: Path.create(['個人']),
+				});
+
+				expect(result.isOk()).toBe(true);
+				const updated = result._unsafeUnwrap();
+				// タスクが「仕事」から「個人」に移動している
+				expect(updated).not.toMatch(/# 仕事[\s\S]*タスク1[\s\S]*# 個人/);
+				expect(updated).toMatch(/# 個人[\s\S]*タスク1/);
+			});
+
+			it('タスクのパスを変更できる（ルートから見出し配下へ）', () => {
+				const markdown = `- [ ] ルートタスク
+
+# 仕事`;
+				const result = client.applyEdit(markdown, {
+					taskId: '（ルート）::ルートタスク',
+					newPath: Path.create(['仕事']),
+				});
+
+				expect(result.isOk()).toBe(true);
+				const updated = result._unsafeUnwrap();
+				// タスクが「仕事」配下に移動している
+				expect(updated).toMatch(/# 仕事[\s\S]*ルートタスク/);
+			});
+
+			it('タスクのパスを変更できる（見出し配下からルートへ）', () => {
+				const markdown = `# 仕事
+- [ ] タスク1`;
+				const result = client.applyEdit(markdown, {
+					taskId: '仕事::タスク1',
+					newPath: Path.create([]),
+				});
+
+				expect(result.isOk()).toBe(true);
+				const updated = result._unsafeUnwrap();
+				// タスクがルートに移動している（見出しの前にある）
+				expect(updated).toMatch(/タスク1[\s\S]*# 仕事/);
+			});
+
+			it('パス変更と同時にステータスも変更できる', () => {
+				const markdown = `# 仕事
+- [ ] タスク1
+  - status: todo
+
+# 完了`;
+				const newStatus = Status.create('done')._unsafeUnwrap();
+				const result = client.applyEdit(markdown, {
+					taskId: '仕事::タスク1',
+					newPath: Path.create(['完了']),
+					newStatus,
+					doneStatuses: ['done'],
+				});
+
+				expect(result.isOk()).toBe(true);
+				const updated = result._unsafeUnwrap();
+				// タスクが「完了」配下に移動し、ステータスも更新されている
+				expect(updated).toMatch(/# 完了[\s\S]*\[x\] タスク1[\s\S]*status: done/);
+			});
+
+			it('パス変更と同時にタイトルも変更できる', () => {
+				const markdown = `# 仕事
+- [ ] 古いタイトル
+
+# 個人`;
+				const result = client.applyEdit(markdown, {
+					taskId: '仕事::古いタイトル',
+					newPath: Path.create(['個人']),
+					newTitle: '新しいタイトル',
+				});
+
+				expect(result.isOk()).toBe(true);
+				const updated = result._unsafeUnwrap();
+				expect(updated).toMatch(/# 個人[\s\S]*新しいタイトル/);
+				expect(updated).not.toContain('古いタイトル');
+			});
+
+			it('存在しないパスへの変更はエラーになる', () => {
+				const markdown = `# 仕事
+- [ ] タスク1`;
+				const result = client.applyEdit(markdown, {
+					taskId: '仕事::タスク1',
+					newPath: Path.create(['存在しない']),
+				});
+
+				expect(result.isErr()).toBe(true);
+			});
+
+			it('メタデータ付きタスクのパスを変更できる', () => {
+				const markdown = `# 仕事
+- [ ] タスク1
+  - status: in-progress
+  - priority: high
+
+# 個人`;
+				const result = client.applyEdit(markdown, {
+					taskId: '仕事::タスク1',
+					newPath: Path.create(['個人']),
+				});
+
+				expect(result.isOk()).toBe(true);
+				const updated = result._unsafeUnwrap();
+				// タスクが「個人」配下に移動し、メタデータも保持されている
+				expect(updated).toMatch(
+					/# 個人[\s\S]*タスク1[\s\S]*status: in-progress[\s\S]*priority: high/,
+				);
+			});
+
+			describe('ネスト階層の移動', () => {
+				it('深いネストから浅いネストへ移動できる', () => {
+					const markdown = `# プロジェクト
+## フェーズ1
+### タスク一覧
+- [ ] 深いタスク
+
+# 完了`;
+					const result = client.applyEdit(markdown, {
+						taskId: 'プロジェクト / フェーズ1 / タスク一覧::深いタスク',
+						newPath: Path.create(['完了']),
+					});
+
+					expect(result.isOk()).toBe(true);
+					const updated = result._unsafeUnwrap();
+					expect(updated).toMatch(/# 完了[\s\S]*深いタスク/);
+					expect(updated).not.toMatch(/### タスク一覧[\s\S]*深いタスク[\s\S]*# 完了/);
+				});
+
+				it('浅いネストから深いネストへ移動できる', () => {
+					const markdown = `# 仕事
+- [ ] タスク1
+
+## サブプロジェクト
+### 詳細`;
+					const result = client.applyEdit(markdown, {
+						taskId: '仕事::タスク1',
+						newPath: Path.create(['仕事', 'サブプロジェクト', '詳細']),
+					});
+
+					expect(result.isOk()).toBe(true);
+					const updated = result._unsafeUnwrap();
+					expect(updated).toMatch(/### 詳細[\s\S]*タスク1/);
+				});
+
+				it('同じ親の別の子見出しへ移動できる', () => {
+					const markdown = `# プロジェクト
+## TODO
+- [ ] タスク1
+
+## 進行中`;
+					const result = client.applyEdit(markdown, {
+						taskId: 'プロジェクト / TODO::タスク1',
+						newPath: Path.create(['プロジェクト', '進行中']),
+					});
+
+					expect(result.isOk()).toBe(true);
+					const updated = result._unsafeUnwrap();
+					expect(updated).toMatch(/## 進行中[\s\S]*タスク1/);
+					// TODOの直後にタスク1がないことを確認（TODOと進行中の間にタスク1がない）
+					expect(updated).toMatch(/## TODO\n\n## 進行中/);
+				});
+			});
+
+			describe('挿入位置', () => {
+				it('移動先に既存タスクがある場合、最後に挿入される', () => {
+					const markdown = `# 仕事
+- [ ] タスク1
+
+# 個人
+- [ ] 既存タスク1
+- [ ] 既存タスク2`;
+					const result = client.applyEdit(markdown, {
+						taskId: '仕事::タスク1',
+						newPath: Path.create(['個人']),
+					});
+
+					expect(result.isOk()).toBe(true);
+					const updated = result._unsafeUnwrap();
+					// 既存タスクの後にタスク1が追加されている
+					expect(updated).toMatch(/既存タスク2[\s\S]*タスク1/);
+				});
+
+				it('移動先にタスクがない場合、見出し直後に挿入される', () => {
+					const markdown = `# 仕事
+- [ ] タスク1
+
+# 個人
+
+# その他`;
+					const result = client.applyEdit(markdown, {
+						taskId: '仕事::タスク1',
+						newPath: Path.create(['個人']),
+					});
+
+					expect(result.isOk()).toBe(true);
+					const updated = result._unsafeUnwrap();
+					// 「個人」と「その他」の間にタスクが挿入される
+					expect(updated).toMatch(/# 個人[\s\S]*タスク1[\s\S]*# その他/);
+				});
+
+				it('ルートへ移動時、既存ルートタスクの後に挿入される', () => {
+					const markdown = `- [ ] ルートタスク1
+- [ ] ルートタスク2
+
+# 仕事
+- [ ] タスク1`;
+					const result = client.applyEdit(markdown, {
+						taskId: '仕事::タスク1',
+						newPath: Path.create([]),
+					});
+
+					expect(result.isOk()).toBe(true);
+					const updated = result._unsafeUnwrap();
+					// ルートタスクの後に追加される
+					expect(updated).toMatch(/ルートタスク2[\s\S]*タスク1[\s\S]*# 仕事/);
+				});
+
+				it('ルートへ移動時、ルートタスクがなく見出しがある場合、見出しの前に挿入される', () => {
+					const markdown = `# 仕事
+- [ ] タスク1
+
+# 個人`;
+					const result = client.applyEdit(markdown, {
+						taskId: '仕事::タスク1',
+						newPath: Path.create([]),
+					});
+
+					expect(result.isOk()).toBe(true);
+					const updated = result._unsafeUnwrap();
+					// 見出しの前に挿入される
+					expect(updated).toMatch(/^- \[ \] タスク1[\s\S]*# 仕事/m);
+				});
+			});
+
+			describe('同時変更', () => {
+				it('パス変更 + ステータス変更 + タイトル変更を同時に行える', () => {
+					const markdown = `# TODO
+- [ ] 古いタイトル
+  - status: todo
+
+# 完了`;
+					const newStatus = Status.create('done')._unsafeUnwrap();
+					const result = client.applyEdit(markdown, {
+						taskId: 'TODO::古いタイトル',
+						newPath: Path.create(['完了']),
+						newStatus,
+						newTitle: '新しいタイトル',
+						doneStatuses: ['done'],
+					});
+
+					expect(result.isOk()).toBe(true);
+					const updated = result._unsafeUnwrap();
+					expect(updated).toMatch(/# 完了[\s\S]*\[x\] 新しいタイトル[\s\S]*status: done/);
+					expect(updated).not.toContain('古いタイトル');
+				});
+			});
+
+			describe('メタデータ保持', () => {
+				it('複数のメタデータがすべて保持される', () => {
+					const markdown = `# 仕事
+- [ ] タスク1
+  - status: in-progress
+  - priority: high
+  - due: 2025-01-15
+  - assignee: user1
+
+# 個人`;
+					const result = client.applyEdit(markdown, {
+						taskId: '仕事::タスク1',
+						newPath: Path.create(['個人']),
+					});
+
+					expect(result.isOk()).toBe(true);
+					const updated = result._unsafeUnwrap();
+					expect(updated).toContain('status: in-progress');
+					expect(updated).toContain('priority: high');
+					expect(updated).toContain('due: 2025-01-15');
+					expect(updated).toContain('assignee: user1');
+				});
+			});
+
+			describe('エッジケース', () => {
+				it('フロントマターがある場合も正しく移動できる', () => {
+					const markdown = `---
+kanban:
+  statuses:
+    - todo
+    - done
+---
+
+# 仕事
+- [ ] タスク1
+
+# 個人`;
+					const result = client.applyEdit(markdown, {
+						taskId: '仕事::タスク1',
+						newPath: Path.create(['個人']),
+					});
+
+					expect(result.isOk()).toBe(true);
+					const updated = result._unsafeUnwrap();
+					expect(updated).toMatch(/# 個人[\s\S]*タスク1/);
+					// フロントマターが保持されている
+					expect(updated).toContain('kanban:');
+				});
+
+				it('複数のタスクがある見出しからの移動で、他のタスクは残る', () => {
+					const markdown = `# 仕事
+- [ ] タスク1
+- [ ] タスク2
+- [ ] タスク3
+
+# 個人`;
+					const result = client.applyEdit(markdown, {
+						taskId: '仕事::タスク2',
+						newPath: Path.create(['個人']),
+					});
+
+					expect(result.isOk()).toBe(true);
+					const updated = result._unsafeUnwrap();
+					// タスク1とタスク3は仕事配下に残っている
+					expect(updated).toMatch(/# 仕事[\s\S]*タスク1[\s\S]*タスク3[\s\S]*# 個人/);
+					// タスク2は個人配下に移動している
+					expect(updated).toMatch(/# 個人[\s\S]*タスク2/);
+				});
+
+				it('移動元が見出し配下の最後のタスクの場合も正しく動作する', () => {
+					const markdown = `# 仕事
+- [ ] タスク1
+- [ ] タスク2
+
+# 個人`;
+					const result = client.applyEdit(markdown, {
+						taskId: '仕事::タスク2',
+						newPath: Path.create(['個人']),
+					});
+
+					expect(result.isOk()).toBe(true);
+					const updated = result._unsafeUnwrap();
+					expect(updated).toMatch(/# 仕事[\s\S]*タスク1[\s\S]*# 個人[\s\S]*タスク2/);
+				});
+
+				it('移動元が見出し配下の最初のタスクの場合も正しく動作する', () => {
+					const markdown = `# 仕事
+- [ ] タスク1
+- [ ] タスク2
+
+# 個人`;
+					const result = client.applyEdit(markdown, {
+						taskId: '仕事::タスク1',
+						newPath: Path.create(['個人']),
+					});
+
+					expect(result.isOk()).toBe(true);
+					const updated = result._unsafeUnwrap();
+					expect(updated).toMatch(/# 仕事[\s\S]*タスク2[\s\S]*# 個人[\s\S]*タスク1/);
+				});
+
+				it('同じパスへの移動は変更なしで成功する', () => {
+					const markdown = `# 仕事
+- [ ] タスク1`;
+					const result = client.applyEdit(markdown, {
+						taskId: '仕事::タスク1',
+						newPath: Path.create(['仕事']),
+					});
+
+					expect(result.isOk()).toBe(true);
+					const updated = result._unsafeUnwrap();
+					// 変更なし（同じ内容）
+					expect(updated).toMatch(/# 仕事[\s\S]*タスク1/);
+				});
+			});
 		});
 
 		describe('重複タスクの編集', () => {

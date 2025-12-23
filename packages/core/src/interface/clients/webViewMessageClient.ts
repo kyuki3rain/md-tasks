@@ -82,4 +82,14 @@ export class WebViewMessageClient {
 			payload: code ? { message, code } : { message },
 		});
 	}
+
+	/**
+	 * ドキュメント状態変更メッセージを送信する
+	 */
+	sendDocumentStateChanged(isDirty: boolean): void {
+		this.postMessage({
+			type: 'DOCUMENT_STATE_CHANGED',
+			payload: { isDirty },
+		});
+	}
 }

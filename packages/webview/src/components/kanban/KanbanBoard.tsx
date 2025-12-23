@@ -13,6 +13,7 @@ import { useKanban } from '../../hooks/useVscodeApi';
 import { cn } from '../../lib/utils';
 import type { TaskDto, TaskMetadata } from '../../types';
 import { Column } from './Column';
+import { FloatingActions } from './FloatingActions';
 import { TaskCardOverlay } from './TaskCard';
 import { TaskModal } from './TaskModal';
 
@@ -26,7 +27,7 @@ interface ModalState {
  * カンバンボードコンポーネント
  */
 export function KanbanBoard() {
-	const { tasksByStatus, config, paths, isLoading, error, actions } = useKanban();
+	const { tasksByStatus, config, paths, isLoading, error, isDirty, actions } = useKanban();
 
 	const [activeId, setActiveId] = useState<string | null>(null);
 	const [activeTask, setActiveTask] = useState<TaskDto | null>(null);
@@ -205,6 +206,13 @@ export function KanbanBoard() {
 				onClose={handleCloseModal}
 				onSave={handleSaveTask}
 				onDelete={modal.task ? handleDeleteTask : undefined}
+			/>
+
+			{/* フローティングアクションボタン */}
+			<FloatingActions
+				isDirty={isDirty}
+				onSave={actions.saveDocument}
+				onRevert={actions.revertDocument}
 			/>
 		</>
 	);

@@ -1,2 +1,2 @@
 // Application Ports
-export {};
+export * from './documentService';

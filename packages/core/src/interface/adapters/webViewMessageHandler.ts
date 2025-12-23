@@ -2,6 +2,7 @@ import { logger } from '../../shared';
 import type { WebViewMessageClient } from '../clients/webViewMessageClient';
 import type { WebViewToExtensionMessage } from '../types/messages';
 import type { ConfigController } from './configController';
+import type { DocumentController } from './documentController';
 import type { TaskController } from './taskController';
 
 /**
@@ -13,6 +14,7 @@ export class WebViewMessageHandler {
 		private readonly taskController: TaskController,
 		private readonly configController: ConfigController,
 		private readonly messageClient: WebViewMessageClient,
+		private readonly documentController?: DocumentController,
 	) {}
 
 	/**
@@ -39,6 +41,12 @@ export class WebViewMessageHandler {
 				break;
 			case 'GET_CONFIG':
 				await this.handleGetConfig();
+				break;
+			case 'SAVE_DOCUMENT':
+				await this.handleSaveDocument();
+				break;
+			case 'REVERT_DOCUMENT':
+				await this.handleRevertDocument();
 				break;
 			default:
 				logger.error(`Unknown message type: ${(message as { type: string }).type}`);
@@ -141,12 +149,56 @@ export class WebViewMessageHandler {
 	}
 
 	/**
+	 * ドキュメント保存を処理する
+	 */
+	private async handleSaveDocument(): Promise<void> {
+		if (!this.documentController) {
+			logger.error('Document controller is not available');
+			this.messageClient.sendError('ドキュメントコントローラーが利用できません');
+			return;
+		}
+
+		const result = await this.documentController.saveDocument();
+
+		if (result.isErr()) {
+			this.sendError(result.error);
+		} else {
+			logger.info('Document saved successfully');
+			// 保存成功後、isDirty: falseを明示的に送信
+			this.messageClient.sendDocumentStateChanged(false);
+		}
+	}
+
+	/**
+	 * ドキュメント破棄を処理する
+	 */
+	private async handleRevertDocument(): Promise<void> {
+		if (!this.documentController) {
+			logger.error('Document controller is not available');
+			this.messageClient.sendError('ドキュメントコントローラーが利用できません');
+			return;
+		}
+
+		const result = await this.documentController.revertDocument();
+
+		if (result.isErr()) {
+			this.sendError(result.error);
+		} else {
+			logger.info('Document reverted successfully');
+			// 破棄成功後、isDirty: falseを明示的に送信
+			this.messageClient.sendDocumentStateChanged(false);
+			// 破棄後、タスク一覧を再取得して送信（UIを更新）
+			await this.handleGetTasks();
+		}
+	}
+
+	/**
 	 * エラーを送信する
 	 */
 	private sendError(error: Error & { _tag?: string }): void {
-		// NoActiveEditorErrorは正常な状態遷移の一つなのでdebugレベルでログ出力
-		if (error._tag === 'NoActiveEditorError') {
-			logger.debug(`No active editor: ${error.message}`);
+		// NoActiveEditorError/NoActiveDocumentErrorは正常な状態遷移の一つなのでdebugレベルでログ出力
+		if (error._tag === 'NoActiveEditorError' || error._tag === 'NoActiveDocumentError') {
+			logger.debug(`No active editor/document: ${error.message}`);
 		} else {
 			logger.error(`Error: ${error.message}`, { errorType: error._tag, message: error.message });
 		}

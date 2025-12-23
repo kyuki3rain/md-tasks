@@ -93,6 +93,7 @@ type MessageHandlers = {
 	TASK_DELETED?: (payload: { id: string }) => void;
 	CONFIG_UPDATED?: (payload: { config: KanbanConfig }) => void;
 	ERROR?: (payload: { message: string; code?: string }) => void;
+	DOCUMENT_STATE_CHANGED?: (payload: { isDirty: boolean }) => void;
 };
 
 /**
@@ -133,6 +134,7 @@ interface KanbanState {
 	config: KanbanConfig | null;
 	isLoading: boolean;
 	error: string | null;
+	isDirty: boolean;
 }
 
 const defaultConfig: KanbanConfig = {
@@ -154,6 +156,7 @@ export function useKanban() {
 		config: null,
 		isLoading: true,
 		error: null,
+		isDirty: false,
 	});
 
 	// メッセージハンドラー
@@ -205,6 +208,12 @@ export function useKanban() {
 						isLoading: false,
 					}));
 				}
+			},
+			DOCUMENT_STATE_CHANGED: (payload: { isDirty: boolean }) => {
+				setState((prev) => ({
+					...prev,
+					isDirty: payload.isDirty,
+				}));
 			},
 		}),
 		[],
@@ -262,6 +271,14 @@ export function useKanban() {
 		setState((prev) => ({ ...prev, error: null }));
 	}, []);
 
+	const saveDocument = useCallback(() => {
+		postMessage({ type: 'SAVE_DOCUMENT' });
+	}, [postMessage]);
+
+	const revertDocument = useCallback(() => {
+		postMessage({ type: 'REVERT_DOCUMENT' });
+	}, [postMessage]);
+
 	// 設定を取得（なければデフォルト）
 	const config = state.config ?? defaultConfig;
 
@@ -286,6 +303,7 @@ export function useKanban() {
 		paths,
 		isLoading: state.isLoading,
 		error: state.error,
+		isDirty: state.isDirty,
 		actions: {
 			createTask,
 			updateTask,
@@ -293,6 +311,8 @@ export function useKanban() {
 			changeTaskStatus,
 			refreshTasks,
 			clearError,
+			saveDocument,
+			revertDocument,
 		},
 	};
 }

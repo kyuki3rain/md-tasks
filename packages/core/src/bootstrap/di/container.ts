@@ -5,12 +5,15 @@ import {
 	DeleteTaskUseCase,
 	GetConfigUseCase,
 	GetTasksUseCase,
+	RevertDocumentUseCase,
+	SaveDocumentUseCase,
 	UpdateTaskUseCase,
 } from '../../application/usecases';
 import {
 	FrontmatterConfigProvider,
 	MarkdownTaskRepository,
 	VscodeConfigProvider,
+	VscodeDocumentService,
 } from '../../infrastructure/adapters';
 import {
 	MarkdownTaskClient,
@@ -18,7 +21,12 @@ import {
 	VscodeConfigClient,
 	VscodeDocumentClient,
 } from '../../infrastructure/clients';
-import { ConfigController, TaskController, WebViewMessageHandler } from '../../interface/adapters';
+import {
+	ConfigController,
+	DocumentController,
+	TaskController,
+	WebViewMessageHandler,
+} from '../../interface/adapters';
 import { WebViewMessageClient } from '../../interface/clients';
 import type { WebViewMessageDeps } from '../../interface/clients/webViewMessageClient';
 
@@ -33,10 +41,11 @@ export class Container {
 	private vscodeDocumentClient!: VscodeDocumentClient;
 	private vscodeConfigClient!: VscodeConfigClient;
 
-	// Adapters (Repositories & Providers)
+	// Adapters (Repositories & Providers & Services)
 	private markdownTaskRepository!: MarkdownTaskRepository;
 	private vscodeConfigProvider!: VscodeConfigProvider;
 	private frontmatterConfigProvider!: FrontmatterConfigProvider;
+	private vscodeDocumentService!: VscodeDocumentService;
 
 	// Use Cases
 	private getTasksUseCase!: GetTasksUseCase;
@@ -45,10 +54,13 @@ export class Container {
 	private deleteTaskUseCase!: DeleteTaskUseCase;
 	private changeTaskStatusUseCase!: ChangeTaskStatusUseCase;
 	private getConfigUseCase!: GetConfigUseCase;
+	private saveDocumentUseCase!: SaveDocumentUseCase;
+	private revertDocumentUseCase!: RevertDocumentUseCase;
 
 	// Controllers
 	private taskController!: TaskController;
 	private configController!: ConfigController;
+	private documentController!: DocumentController;
 
 	/**
 	 * コンテナを初期化する
@@ -78,6 +90,7 @@ export class Container {
 			createWorkspaceEdit: () => new vscode.WorkspaceEdit(),
 			createRange: (startLine, startCharacter, endLine, endCharacter) =>
 				new vscode.Range(startLine, startCharacter, endLine, endCharacter),
+			readFile: (uri) => vscode.workspace.fs.readFile(uri),
 		});
 
 		// VscodeConfigClient
@@ -105,6 +118,9 @@ export class Container {
 			this.vscodeDocumentClient,
 			this.vscodeConfigProvider,
 		);
+
+		// VscodeDocumentService
+		this.vscodeDocumentService = new VscodeDocumentService(this.vscodeDocumentClient);
 	}
 
 	/**
@@ -137,6 +153,12 @@ export class Container {
 
 		// GetConfigUseCase
 		this.getConfigUseCase = new GetConfigUseCase(this.frontmatterConfigProvider);
+
+		// SaveDocumentUseCase
+		this.saveDocumentUseCase = new SaveDocumentUseCase(this.vscodeDocumentService);
+
+		// RevertDocumentUseCase
+		this.revertDocumentUseCase = new RevertDocumentUseCase(this.vscodeDocumentService);
 	}
 
 	/**
@@ -154,6 +176,12 @@ export class Container {
 
 		// ConfigController
 		this.configController = new ConfigController(this.getConfigUseCase);
+
+		// DocumentController
+		this.documentController = new DocumentController(
+			this.saveDocumentUseCase,
+			this.revertDocumentUseCase,
+		);
 	}
 
 	/**
@@ -162,7 +190,12 @@ export class Container {
 	 */
 	createWebViewMessageHandler(messageDeps: WebViewMessageDeps): WebViewMessageHandler {
 		const messageClient = new WebViewMessageClient(messageDeps);
-		return new WebViewMessageHandler(this.taskController, this.configController, messageClient);
+		return new WebViewMessageHandler(
+			this.taskController,
+			this.configController,
+			messageClient,
+			this.documentController,
+		);
 	}
 
 	/**

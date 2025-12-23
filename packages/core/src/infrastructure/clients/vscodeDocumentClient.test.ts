@@ -234,4 +234,97 @@ describe('VscodeDocumentClient', () => {
 			}
 		});
 	});
+
+	describe('saveDocument', () => {
+		it('ドキュメントを保存できる', async () => {
+			const mockUri = createMockUri('/test/file.md');
+			const mockSave = vi.fn().mockResolvedValue(true);
+			const mockDocument = {
+				uri: mockUri,
+				getText: () => '# Test',
+				save: mockSave,
+			};
+			const mockEditor = { document: mockDocument };
+
+			const deps = createMockDeps({
+				getActiveTextEditor: vi.fn().mockReturnValue(mockEditor),
+				openTextDocument: vi.fn().mockResolvedValue(mockDocument),
+			});
+			const client = new VscodeDocumentClient(deps);
+
+			const result = await client.saveDocument();
+
+			expect(result.isOk()).toBe(true);
+			expect(mockSave).toHaveBeenCalled();
+		});
+
+		it('保存に失敗した場合はDocumentEditErrorを返す', async () => {
+			const mockUri = createMockUri('/test/file.md');
+			const mockSave = vi.fn().mockResolvedValue(false);
+			const mockDocument = {
+				uri: mockUri,
+				getText: () => '# Test',
+				save: mockSave,
+			};
+			const mockEditor = { document: mockDocument };
+
+			const deps = createMockDeps({
+				getActiveTextEditor: vi.fn().mockReturnValue(mockEditor),
+				openTextDocument: vi.fn().mockResolvedValue(mockDocument),
+			});
+			const client = new VscodeDocumentClient(deps);
+
+			const result = await client.saveDocument();
+
+			expect(result.isErr()).toBe(true);
+			if (result.isErr()) {
+				expect(result.error).toBeInstanceOf(DocumentEditError);
+			}
+		});
+	});
+
+	describe('revertDocument', () => {
+		it('ドキュメントの変更を破棄できる', async () => {
+			const mockUri = createMockUri('/test/file.md');
+			const mockDocument = {
+				uri: mockUri,
+				getText: () => '# Test',
+			};
+			const mockEditor = { document: mockDocument };
+			const mockExecuteCommand = vi.fn().mockResolvedValue(undefined);
+
+			const deps = createMockDeps({
+				getActiveTextEditor: vi.fn().mockReturnValue(mockEditor),
+				executeCommand: mockExecuteCommand,
+			});
+			const client = new VscodeDocumentClient(deps);
+
+			const result = await client.revertDocument();
+
+			expect(result.isOk()).toBe(true);
+			expect(mockExecuteCommand).toHaveBeenCalledWith('workbench.action.files.revert', mockUri);
+		});
+
+		it('変更の破棄に失敗した場合はDocumentEditErrorを返す', async () => {
+			const mockUri = createMockUri('/test/file.md');
+			const mockDocument = {
+				uri: mockUri,
+				getText: () => '# Test',
+			};
+			const mockEditor = { document: mockDocument };
+
+			const deps = createMockDeps({
+				getActiveTextEditor: vi.fn().mockReturnValue(mockEditor),
+				executeCommand: vi.fn().mockRejectedValue(new Error('Revert failed')),
+			});
+			const client = new VscodeDocumentClient(deps);
+
+			const result = await client.revertDocument();
+
+			expect(result.isErr()).toBe(true);
+			if (result.isErr()) {
+				expect(result.error).toBeInstanceOf(DocumentEditError);
+			}
+		});
+	});
 });

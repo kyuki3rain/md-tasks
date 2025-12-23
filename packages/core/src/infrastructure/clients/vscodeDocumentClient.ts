@@ -51,6 +51,7 @@ export interface VscodeDocumentDeps {
 		endCharacter: number,
 	): vscode.Range;
 	executeCommand<T>(command: string, ...args: unknown[]): Thenable<T | undefined>;
+	readFile(uri: vscode.Uri): Thenable<Uint8Array>;
 }
 
 /**
@@ -238,8 +239,11 @@ export class VscodeDocumentClient {
 
 	/**
 	 * 現在のドキュメントの変更を破棄する（revert）
+	 * ディスクからファイルを読み込み、ドキュメントを上書きして保存する
 	 */
-	async revertDocument(): Promise<Result<void, NoActiveEditorError | DocumentEditError>> {
+	async revertDocument(): Promise<
+		Result<void, NoActiveEditorError | DocumentNotFoundError | DocumentEditError>
+	> {
 		// URIを取得
 		const uriResult = this.getCurrentDocumentUriOrActive();
 		if (uriResult.isErr()) {
@@ -248,7 +252,40 @@ export class VscodeDocumentClient {
 		const uri = uriResult.value;
 
 		try {
-			await this.deps.executeCommand('workbench.action.files.revert', uri);
+			// ドキュメントを開く
+			const document = await this.deps.openTextDocument(uri);
+
+			// isDirtyでない場合は何もしない
+			if (!document.isDirty) {
+				return ok(undefined);
+			}
+
+			// ディスクからファイルを読み込む
+			const diskContent = await this.deps.readFile(uri);
+			const diskText = new TextDecoder('utf-8').decode(diskContent);
+
+			// 現在のドキュメントの内容を取得して範囲を計算
+			const currentText = document.getText();
+			const currentLines = currentText.length > 0 ? currentText.split(/\r?\n/) : [''];
+			const lastLineIndex = Math.max(currentLines.length - 1, 0);
+			const lastLineLength = currentLines[lastLineIndex]?.length ?? 0;
+
+			// ドキュメント全体をディスクの内容で置き換える
+			const edit = this.deps.createWorkspaceEdit();
+			const targetRange = this.deps.createRange(0, 0, lastLineIndex, lastLineLength);
+			edit.replace(uri, targetRange, diskText);
+
+			const applied = await this.deps.applyEdit(edit);
+			if (!applied) {
+				return err(new DocumentEditError('ドキュメントの変更を破棄できませんでした'));
+			}
+
+			// 保存してisDirtyをfalseにする
+			const saved = await document.save();
+			if (!saved) {
+				return err(new DocumentEditError('ドキュメントの保存に失敗しました'));
+			}
+
 			return ok(undefined);
 		} catch (error) {
 			return err(

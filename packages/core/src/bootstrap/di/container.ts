@@ -92,6 +92,7 @@ export class Container {
 				new vscode.Range(startLine, startCharacter, endLine, endCharacter),
 			executeCommand: <T>(command: string, ...args: unknown[]) =>
 				vscode.commands.executeCommand<T>(command, ...args),
+			readFile: (uri) => vscode.workspace.fs.readFile(uri),
 		});
 
 		// VscodeConfigClient

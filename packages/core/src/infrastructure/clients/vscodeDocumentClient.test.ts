@@ -30,11 +30,12 @@ const createMockDeps = (overrides: Partial<VscodeDocumentDeps> = {}): VscodeDocu
 	getActiveTextEditor: vi.fn().mockReturnValue(undefined),
 	openTextDocument: vi
 		.fn()
-		.mockResolvedValue({ getText: () => '', save: () => Promise.resolve(true) }),
+		.mockResolvedValue({ getText: () => '', save: () => Promise.resolve(true), isDirty: false }),
 	applyEdit: vi.fn().mockResolvedValue(true),
 	createWorkspaceEdit: vi.fn().mockReturnValue({ replace: vi.fn() }),
 	createRange: vi.fn().mockImplementation(createMockRange),
 	executeCommand: vi.fn().mockResolvedValue(undefined),
+	readFile: vi.fn().mockResolvedValue(new TextEncoder().encode('')),
 	...overrides,
 });
 
@@ -286,36 +287,97 @@ describe('VscodeDocumentClient', () => {
 	describe('revertDocument', () => {
 		it('ドキュメントの変更を破棄できる', async () => {
 			const mockUri = createMockUri('/test/file.md');
+			const diskContent = '# Original Content';
+			const mockSave = vi.fn().mockResolvedValue(true);
+			const mockReplace = vi.fn();
 			const mockDocument = {
 				uri: mockUri,
-				getText: () => '# Test',
+				getText: () => '# Modified Content',
+				isDirty: true,
+				save: mockSave,
 			};
 			const mockEditor = { document: mockDocument };
-			const mockExecuteCommand = vi.fn().mockResolvedValue(undefined);
+			const mockReadFile = vi.fn().mockResolvedValue(new TextEncoder().encode(diskContent));
 
 			const deps = createMockDeps({
 				getActiveTextEditor: vi.fn().mockReturnValue(mockEditor),
-				executeCommand: mockExecuteCommand,
+				openTextDocument: vi.fn().mockResolvedValue(mockDocument),
+				readFile: mockReadFile,
+				createWorkspaceEdit: vi.fn().mockReturnValue({ replace: mockReplace }),
 			});
 			const client = new VscodeDocumentClient(deps);
 
 			const result = await client.revertDocument();
 
 			expect(result.isOk()).toBe(true);
-			expect(mockExecuteCommand).toHaveBeenCalledWith('workbench.action.files.revert', mockUri);
+			expect(mockReadFile).toHaveBeenCalledWith(mockUri);
+			expect(mockReplace).toHaveBeenCalledWith(mockUri, expect.anything(), diskContent);
+			expect(mockSave).toHaveBeenCalled();
 		});
 
-		it('変更の破棄に失敗した場合はDocumentEditErrorを返す', async () => {
+		it('isDirtyでない場合は何もせずにokを返す', async () => {
 			const mockUri = createMockUri('/test/file.md');
+			const mockSave = vi.fn().mockResolvedValue(true);
 			const mockDocument = {
 				uri: mockUri,
 				getText: () => '# Test',
+				isDirty: false,
+				save: mockSave,
 			};
 			const mockEditor = { document: mockDocument };
 
 			const deps = createMockDeps({
 				getActiveTextEditor: vi.fn().mockReturnValue(mockEditor),
-				executeCommand: vi.fn().mockRejectedValue(new Error('Revert failed')),
+				openTextDocument: vi.fn().mockResolvedValue(mockDocument),
+			});
+			const client = new VscodeDocumentClient(deps);
+
+			const result = await client.revertDocument();
+
+			expect(result.isOk()).toBe(true);
+			expect(mockSave).not.toHaveBeenCalled();
+		});
+
+		it('applyEditに失敗した場合はDocumentEditErrorを返す', async () => {
+			const mockUri = createMockUri('/test/file.md');
+			const mockDocument = {
+				uri: mockUri,
+				getText: () => '# Test',
+				isDirty: true,
+				save: vi.fn().mockResolvedValue(true),
+			};
+			const mockEditor = { document: mockDocument };
+
+			const deps = createMockDeps({
+				getActiveTextEditor: vi.fn().mockReturnValue(mockEditor),
+				openTextDocument: vi.fn().mockResolvedValue(mockDocument),
+				readFile: vi.fn().mockResolvedValue(new TextEncoder().encode('# Original')),
+				applyEdit: vi.fn().mockResolvedValue(false),
+			});
+			const client = new VscodeDocumentClient(deps);
+
+			const result = await client.revertDocument();
+
+			expect(result.isErr()).toBe(true);
+			if (result.isErr()) {
+				expect(result.error).toBeInstanceOf(DocumentEditError);
+			}
+		});
+
+		it('saveに失敗した場合はDocumentEditErrorを返す', async () => {
+			const mockUri = createMockUri('/test/file.md');
+			const mockDocument = {
+				uri: mockUri,
+				getText: () => '# Test',
+				isDirty: true,
+				save: vi.fn().mockResolvedValue(false),
+			};
+			const mockEditor = { document: mockDocument };
+
+			const deps = createMockDeps({
+				getActiveTextEditor: vi.fn().mockReturnValue(mockEditor),
+				openTextDocument: vi.fn().mockResolvedValue(mockDocument),
+				readFile: vi.fn().mockResolvedValue(new TextEncoder().encode('# Original')),
 			});
 			const client = new VscodeDocumentClient(deps);
 

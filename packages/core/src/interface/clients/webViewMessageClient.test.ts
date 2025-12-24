@@ -57,39 +57,6 @@ describe('WebViewMessageClient', () => {
 		});
 	});
 
-	describe('sendTaskCreated', () => {
-		it('タスク作成成功メッセージを送信できる', () => {
-			client.sendTaskCreated(mockTask);
-
-			expect(deps.postMessage).toHaveBeenCalledWith({
-				type: 'TASK_CREATED',
-				payload: { task: mockTask },
-			});
-		});
-	});
-
-	describe('sendTaskUpdated', () => {
-		it('タスク更新成功メッセージを送信できる', () => {
-			client.sendTaskUpdated(mockTask);
-
-			expect(deps.postMessage).toHaveBeenCalledWith({
-				type: 'TASK_UPDATED',
-				payload: { task: mockTask },
-			});
-		});
-	});
-
-	describe('sendTaskDeleted', () => {
-		it('タスク削除成功メッセージを送信できる', () => {
-			client.sendTaskDeleted('task-1');
-
-			expect(deps.postMessage).toHaveBeenCalledWith({
-				type: 'TASK_DELETED',
-				payload: { id: 'task-1' },
-			});
-		});
-	});
-
 	describe('sendConfigUpdated', () => {
 		it('設定更新メッセージを送信できる', () => {
 			const config = {

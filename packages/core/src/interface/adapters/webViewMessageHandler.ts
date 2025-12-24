@@ -68,6 +68,7 @@ export class WebViewMessageHandler {
 
 	/**
 	 * タスク作成を処理する
+	 * 注: 成功時のメッセージ送信は行わない（ドキュメント変更イベントでTASKS_UPDATEDが送信されるため）
 	 */
 	private async handleCreateTask(payload: {
 		title: string;
@@ -82,15 +83,15 @@ export class WebViewMessageHandler {
 			metadata: payload.metadata,
 		});
 
-		if (result.isOk()) {
-			this.messageClient.sendTaskCreated(result.value);
-		} else {
+		if (result.isErr()) {
 			this.sendError(result.error);
 		}
+		// 成功時は何も送信しない（ドキュメント変更イベントでTASKS_UPDATEDが送信される）
 	}
 
 	/**
 	 * タスク更新を処理する
+	 * 注: 成功時のメッセージ送信は行わない（ドキュメント変更イベントでTASKS_UPDATEDが送信されるため）
 	 */
 	private async handleUpdateTask(payload: {
 		id: string;
@@ -107,37 +108,36 @@ export class WebViewMessageHandler {
 			metadata: payload.metadata,
 		});
 
-		if (result.isOk()) {
-			this.messageClient.sendTaskUpdated(result.value);
-		} else {
+		if (result.isErr()) {
 			this.sendError(result.error);
 		}
+		// 成功時は何も送信しない（ドキュメント変更イベントでTASKS_UPDATEDが送信される）
 	}
 
 	/**
 	 * タスク削除を処理する
+	 * 注: 成功時のメッセージ送信は行わない（ドキュメント変更イベントでTASKS_UPDATEDが送信されるため）
 	 */
 	private async handleDeleteTask(id: string): Promise<void> {
 		const result = await this.taskController.deleteTask(id);
 
-		if (result.isOk()) {
-			this.messageClient.sendTaskDeleted(id);
-		} else {
+		if (result.isErr()) {
 			this.sendError(result.error);
 		}
+		// 成功時は何も送信しない（ドキュメント変更イベントでTASKS_UPDATEDが送信される）
 	}
 
 	/**
 	 * タスクステータス変更を処理する
+	 * 注: 成功時のメッセージ送信は行わない（ドキュメント変更イベントでTASKS_UPDATEDが送信されるため）
 	 */
 	private async handleChangeTaskStatus(id: string, status: string): Promise<void> {
 		const result = await this.taskController.changeTaskStatus(id, status);
 
-		if (result.isOk()) {
-			this.messageClient.sendTaskUpdated(result.value);
-		} else {
+		if (result.isErr()) {
 			this.sendError(result.error);
 		}
+		// 成功時は何も送信しない（ドキュメント変更イベントでTASKS_UPDATEDが送信される）
 	}
 
 	/**

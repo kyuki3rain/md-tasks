@@ -88,9 +88,6 @@ export function useVscodeMessage(
 
 type MessageHandlers = {
 	TASKS_UPDATED?: (payload: { tasks: TaskDto[] }) => void;
-	TASK_CREATED?: (payload: { task: TaskDto }) => void;
-	TASK_UPDATED?: (payload: { task: TaskDto }) => void;
-	TASK_DELETED?: (payload: { id: string }) => void;
 	CONFIG_UPDATED?: (payload: { config: KanbanConfig }) => void;
 	ERROR?: (payload: { message: string; code?: string }) => void;
 	DOCUMENT_STATE_CHANGED?: (payload: { isDirty: boolean }) => void;
@@ -173,24 +170,6 @@ export function useKanban() {
 				setState((prev) => ({
 					...prev,
 					config: payload.config,
-				}));
-			},
-			TASK_CREATED: (payload: { task: TaskDto }) => {
-				setState((prev) => ({
-					...prev,
-					tasks: [...prev.tasks, payload.task],
-				}));
-			},
-			TASK_UPDATED: (payload: { task: TaskDto }) => {
-				setState((prev) => ({
-					...prev,
-					tasks: prev.tasks.map((t) => (t.id === payload.task.id ? payload.task : t)),
-				}));
-			},
-			TASK_DELETED: (payload: { id: string }) => {
-				setState((prev) => ({
-					...prev,
-					tasks: prev.tasks.filter((t) => t.id !== payload.id),
 				}));
 			},
 			ERROR: (payload: { message: string; code?: string }) => {

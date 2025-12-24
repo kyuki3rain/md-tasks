@@ -31,7 +31,7 @@ describe('CreateTaskUseCase', () => {
 			const title = 'New Task';
 
 			const savedTask = Task.create({
-				id: 'project-feature-a-new-task',
+				id: 'Project / Feature A::New Task',
 				title,
 				status: Status.create('todo')._unsafeUnwrap(),
 				path,
@@ -60,7 +60,7 @@ describe('CreateTaskUseCase', () => {
 			const status = Status.create('in-progress')._unsafeUnwrap();
 
 			const savedTask = Task.create({
-				id: 'project-task-with-status',
+				id: 'Project::Task with status',
 				title,
 				status,
 				path,
@@ -86,7 +86,7 @@ describe('CreateTaskUseCase', () => {
 			const title = 'Task without status';
 
 			const savedTask = Task.create({
-				id: 'project-task-without-status',
+				id: 'Project::Task without status',
 				title,
 				status: Status.create('todo')._unsafeUnwrap(),
 				path,
@@ -118,7 +118,7 @@ describe('CreateTaskUseCase', () => {
 			const metadata = { priority: 'high', assignee: 'alice' };
 
 			const savedTask = Task.create({
-				id: 'project-task-with-metadata',
+				id: 'Project::Task with metadata',
 				title,
 				status: Status.create('todo')._unsafeUnwrap(),
 				path,

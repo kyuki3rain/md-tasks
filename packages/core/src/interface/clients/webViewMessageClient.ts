@@ -34,36 +34,6 @@ export class WebViewMessageClient {
 	}
 
 	/**
-	 * タスク作成成功メッセージを送信する
-	 */
-	sendTaskCreated(task: TaskDto): void {
-		this.postMessage({
-			type: 'TASK_CREATED',
-			payload: { task },
-		});
-	}
-
-	/**
-	 * タスク更新成功メッセージを送信する
-	 */
-	sendTaskUpdated(task: TaskDto): void {
-		this.postMessage({
-			type: 'TASK_UPDATED',
-			payload: { task },
-		});
-	}
-
-	/**
-	 * タスク削除成功メッセージを送信する
-	 */
-	sendTaskDeleted(id: string): void {
-		this.postMessage({
-			type: 'TASK_DELETED',
-			payload: { id },
-		});
-	}
-
-	/**
 	 * 設定更新メッセージを送信する
 	 */
 	sendConfigUpdated(config: KanbanConfig): void {

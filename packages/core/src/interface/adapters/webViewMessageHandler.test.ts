@@ -50,9 +50,6 @@ describe('WebViewMessageHandler', () => {
 		mockMessageClient = {
 			postMessage: vi.fn(),
 			sendTasksUpdated: vi.fn(),
-			sendTaskCreated: vi.fn(),
-			sendTaskUpdated: vi.fn(),
-			sendTaskDeleted: vi.fn(),
 			sendConfigUpdated: vi.fn(),
 			sendError: vi.fn(),
 		} as unknown as WebViewMessageClient;
@@ -91,7 +88,7 @@ describe('WebViewMessageHandler', () => {
 		});
 
 		describe('CREATE_TASK', () => {
-			it('タスクを作成して送信する', async () => {
+			it('タスクを作成する（成功時はメッセージを送信しない）', async () => {
 				const message: WebViewToExtensionMessage = {
 					type: 'CREATE_TASK',
 					payload: {
@@ -108,7 +105,8 @@ describe('WebViewMessageHandler', () => {
 					status: undefined,
 					metadata: undefined,
 				});
-				expect(mockMessageClient.sendTaskCreated).toHaveBeenCalledWith(mockTaskDto);
+				// 成功時はメッセージを送信しない（ドキュメント変更イベントでTASKS_UPDATEDが送信される）
+				expect(mockMessageClient.sendTasksUpdated).not.toHaveBeenCalled();
 			});
 
 			it('ステータス付きでタスクを作成できる', async () => {
@@ -133,7 +131,7 @@ describe('WebViewMessageHandler', () => {
 		});
 
 		describe('UPDATE_TASK', () => {
-			it('タスクを更新して送信する', async () => {
+			it('タスクを更新する（成功時はメッセージを送信しない）', async () => {
 				const message: WebViewToExtensionMessage = {
 					type: 'UPDATE_TASK',
 					payload: {
@@ -150,7 +148,8 @@ describe('WebViewMessageHandler', () => {
 					path: undefined,
 					metadata: undefined,
 				});
-				expect(mockMessageClient.sendTaskUpdated).toHaveBeenCalledWith(mockTaskDto);
+				// 成功時はメッセージを送信しない（ドキュメント変更イベントでTASKS_UPDATEDが送信される）
+				expect(mockMessageClient.sendTasksUpdated).not.toHaveBeenCalled();
 			});
 
 			it('エラー時はエラーメッセージを送信する', async () => {
@@ -172,7 +171,7 @@ describe('WebViewMessageHandler', () => {
 		});
 
 		describe('DELETE_TASK', () => {
-			it('タスクを削除して送信する', async () => {
+			it('タスクを削除する（成功時はメッセージを送信しない）', async () => {
 				const message: WebViewToExtensionMessage = {
 					type: 'DELETE_TASK',
 					payload: { id: 'task-1' },
@@ -181,12 +180,13 @@ describe('WebViewMessageHandler', () => {
 				await handler.handleMessage(message);
 
 				expect(mockTaskController.deleteTask).toHaveBeenCalledWith('task-1');
-				expect(mockMessageClient.sendTaskDeleted).toHaveBeenCalledWith('task-1');
+				// 成功時はメッセージを送信しない（ドキュメント変更イベントでTASKS_UPDATEDが送信される）
+				expect(mockMessageClient.sendTasksUpdated).not.toHaveBeenCalled();
 			});
 		});
 
 		describe('CHANGE_TASK_STATUS', () => {
-			it('タスクのステータスを変更して送信する', async () => {
+			it('タスクのステータスを変更する（成功時はメッセージを送信しない）', async () => {
 				const message: WebViewToExtensionMessage = {
 					type: 'CHANGE_TASK_STATUS',
 					payload: {
@@ -198,7 +198,8 @@ describe('WebViewMessageHandler', () => {
 				await handler.handleMessage(message);
 
 				expect(mockTaskController.changeTaskStatus).toHaveBeenCalledWith('task-1', 'done');
-				expect(mockMessageClient.sendTaskUpdated).toHaveBeenCalledWith(mockTaskDto);
+				// 成功時はメッセージを送信しない（ドキュメント変更イベントでTASKS_UPDATEDが送信される）
+				expect(mockMessageClient.sendTasksUpdated).not.toHaveBeenCalled();
 			});
 		});
 

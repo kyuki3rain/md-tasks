@@ -121,36 +121,6 @@ export interface TasksUpdatedMessage {
 }
 
 /**
- * タスク作成成功メッセージ
- */
-export interface TaskCreatedMessage {
-	type: 'TASK_CREATED';
-	payload: {
-		task: TaskDto;
-	};
-}
-
-/**
- * タスク更新成功メッセージ
- */
-export interface TaskUpdatedMessage {
-	type: 'TASK_UPDATED';
-	payload: {
-		task: TaskDto;
-	};
-}
-
-/**
- * タスク削除成功メッセージ
- */
-export interface TaskDeletedMessage {
-	type: 'TASK_DELETED';
-	payload: {
-		id: string;
-	};
-}
-
-/**
  * 設定更新メッセージ
  */
 export interface ConfigUpdatedMessage {
@@ -186,9 +156,6 @@ export interface DocumentStateChangedMessage {
  */
 export type ExtensionToWebViewMessage =
 	| TasksUpdatedMessage
-	| TaskCreatedMessage
-	| TaskUpdatedMessage
-	| TaskDeletedMessage
 	| ConfigUpdatedMessage
 	| ErrorMessage
 	| DocumentStateChangedMessage;

@@ -56,10 +56,9 @@ export class CreateTaskUseCase {
 
 	/**
 	 * タスクIDを生成する
+	 * MarkdownTaskClientのパース結果と一致する形式で生成
 	 */
 	private generateTaskId(path: Path, title: string): string {
-		const pathPart = path.segments.join('-').toLowerCase().replace(/\s+/g, '-');
-		const titlePart = title.toLowerCase().replace(/\s+/g, '-');
-		return pathPart ? `${pathPart}-${titlePart}` : titlePart;
+		return `${path.toString()}::${title}`;
 	}
 }

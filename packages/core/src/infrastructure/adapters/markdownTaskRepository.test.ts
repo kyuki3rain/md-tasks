@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { Task } from '../../domain/entities/task';
 import { TaskNotFoundError } from '../../domain/errors/taskNotFoundError';
 import { TaskParseError } from '../../domain/errors/taskParseError';
+import type { ConfigProvider, KanbanConfig } from '../../domain/ports/configProvider';
 import { Path } from '../../domain/valueObjects/path';
 import { Status } from '../../domain/valueObjects/status';
 import type { MarkdownTaskClient, ParseResult } from '../clients/markdownTaskClient';
@@ -42,6 +43,22 @@ const createMockVscodeDocumentClient = (
 		replaceDocumentText: vi.fn().mockResolvedValue(ok(undefined)),
 		...overrides,
 	}) as unknown as VscodeDocumentClient;
+
+const createMockConfigProvider = (overrides: Partial<KanbanConfig> = {}): ConfigProvider => {
+	const config: KanbanConfig = {
+		statuses: ['todo', 'in-progress', 'done'],
+		doneStatuses: ['done'],
+		defaultStatus: 'todo',
+		defaultDoneStatus: 'done',
+		sortBy: 'markdown',
+		syncCheckboxWithDone: true,
+		...overrides,
+	};
+	return {
+		getConfig: vi.fn().mockResolvedValue(config),
+		get: vi.fn().mockImplementation((key: keyof KanbanConfig) => Promise.resolve(config[key])),
+	};
+};
 
 const createMockTask = (overrides: Partial<Parameters<typeof Task.create>[0]> = {}): Task =>
 	Task.create({
@@ -90,8 +107,9 @@ describe('MarkdownTaskRepository', () => {
 				),
 			});
 			const documentClient = createMockVscodeDocumentClient();
+			const configProvider = createMockConfigProvider();
 
-			const repository = new MarkdownTaskRepository(markdownClient, documentClient);
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
 			const result = await repository.findAll();
 
 			expect(result.isOk()).toBe(true);
@@ -111,8 +129,9 @@ describe('MarkdownTaskRepository', () => {
 					error: { message: 'No document' },
 				}),
 			});
+			const configProvider = createMockConfigProvider();
 
-			const repository = new MarkdownTaskRepository(markdownClient, documentClient);
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
 			const result = await repository.findAll();
 
 			expect(result.isErr()).toBe(true);
@@ -147,8 +166,9 @@ describe('MarkdownTaskRepository', () => {
 				),
 			});
 			const documentClient = createMockVscodeDocumentClient();
+			const configProvider = createMockConfigProvider();
 
-			const repository = new MarkdownTaskRepository(markdownClient, documentClient);
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
 			const result = await repository.findById('Test::Task 1');
 
 			expect(result.isOk()).toBe(true);
@@ -168,8 +188,9 @@ describe('MarkdownTaskRepository', () => {
 				),
 			});
 			const documentClient = createMockVscodeDocumentClient();
+			const configProvider = createMockConfigProvider();
 
-			const repository = new MarkdownTaskRepository(markdownClient, documentClient);
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
 			const result = await repository.findById('nonexistent');
 
 			expect(result.isErr()).toBe(true);
@@ -214,8 +235,9 @@ describe('MarkdownTaskRepository', () => {
 				),
 			});
 			const documentClient = createMockVscodeDocumentClient();
+			const configProvider = createMockConfigProvider();
 
-			const repository = new MarkdownTaskRepository(markdownClient, documentClient);
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
 			const result = await repository.findByPath(Path.create(['Test']));
 
 			expect(result.isOk()).toBe(true);
@@ -239,8 +261,9 @@ describe('MarkdownTaskRepository', () => {
 				applyEdit: vi.fn().mockReturnValue(ok('# Test\n- [ ] New Task\n  - status: todo')),
 			});
 			const documentClient = createMockVscodeDocumentClient();
+			const configProvider = createMockConfigProvider();
 
-			const repository = new MarkdownTaskRepository(markdownClient, documentClient);
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
 			const newTask = createMockTask({ id: 'Test::New Task', title: 'New Task' });
 			const result = await repository.save(newTask);
 
@@ -274,8 +297,9 @@ describe('MarkdownTaskRepository', () => {
 				applyEdit: vi.fn().mockReturnValue(ok('# Test\n- [x] Task 1\n  - status: done')),
 			});
 			const documentClient = createMockVscodeDocumentClient();
+			const configProvider = createMockConfigProvider();
 
-			const repository = new MarkdownTaskRepository(markdownClient, documentClient);
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
 			const updatedTask = createMockTask({
 				id: 'Test::Task 1',
 				title: 'Task 1',
@@ -314,8 +338,9 @@ describe('MarkdownTaskRepository', () => {
 				applyEdit: vi.fn().mockReturnValue(ok('# Other\n- [ ] Task 1\n  - status: todo')),
 			});
 			const documentClient = createMockVscodeDocumentClient();
+			const configProvider = createMockConfigProvider();
 
-			const repository = new MarkdownTaskRepository(markdownClient, documentClient);
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
 			const updatedTask = createMockTask({
 				id: 'Test::Task 1',
 				title: 'Task 1',
@@ -357,8 +382,9 @@ describe('MarkdownTaskRepository', () => {
 				applyEdit: vi.fn().mockReturnValue(ok('# Test\n- [x] Task 1\n  - status: done')),
 			});
 			const documentClient = createMockVscodeDocumentClient();
+			const configProvider = createMockConfigProvider();
 
-			const repository = new MarkdownTaskRepository(markdownClient, documentClient);
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
 			const updatedTask = createMockTask({
 				id: 'Test::Task 1',
 				title: 'Task 1',
@@ -373,6 +399,139 @@ describe('MarkdownTaskRepository', () => {
 				expect.objectContaining({
 					taskId: 'Test::Task 1',
 					newPath: undefined,
+				}),
+			);
+		});
+
+		it('ステータスをdoneに変更するとdoneStatusesがapplyEditに渡される', async () => {
+			const existingTask = {
+				id: 'Test::Task 1',
+				title: 'Task 1',
+				status: createStatus('todo'),
+				path: Path.create(['Test']),
+				isChecked: false,
+				metadata: {},
+				startLine: 2,
+				endLine: 3,
+			};
+
+			const markdownClient = createMockMarkdownTaskClient({
+				parse: vi.fn().mockReturnValue(
+					ok({
+						tasks: [existingTask],
+						headings: [],
+						warnings: [],
+					}),
+				),
+				applyEdit: vi.fn().mockReturnValue(ok('# Test\n- [x] Task 1\n  - status: done')),
+			});
+			const documentClient = createMockVscodeDocumentClient();
+			const configProvider = createMockConfigProvider({ doneStatuses: ['done', 'completed'] });
+
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
+			const updatedTask = createMockTask({
+				id: 'Test::Task 1',
+				title: 'Task 1',
+				status: createStatus('done'),
+				isChecked: true,
+			});
+			const result = await repository.save(updatedTask);
+
+			expect(result.isOk()).toBe(true);
+			expect(markdownClient.applyEdit).toHaveBeenCalledWith(
+				expect.any(String),
+				expect.objectContaining({
+					taskId: 'Test::Task 1',
+					newStatus: expect.objectContaining({ value: 'done' }),
+					doneStatuses: ['done', 'completed'],
+				}),
+			);
+		});
+
+		it('syncCheckboxWithDoneがfalseの場合はdoneStatusesを渡さない', async () => {
+			const existingTask = {
+				id: 'Test::Task 1',
+				title: 'Task 1',
+				status: createStatus('todo'),
+				path: Path.create(['Test']),
+				isChecked: false,
+				metadata: {},
+				startLine: 2,
+				endLine: 3,
+			};
+
+			const markdownClient = createMockMarkdownTaskClient({
+				parse: vi.fn().mockReturnValue(
+					ok({
+						tasks: [existingTask],
+						headings: [],
+						warnings: [],
+					}),
+				),
+				applyEdit: vi.fn().mockReturnValue(ok('# Test\n- [ ] Task 1\n  - status: done')),
+			});
+			const documentClient = createMockVscodeDocumentClient();
+			const configProvider = createMockConfigProvider({ syncCheckboxWithDone: false });
+
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
+			const updatedTask = createMockTask({
+				id: 'Test::Task 1',
+				title: 'Task 1',
+				status: createStatus('done'),
+				isChecked: false,
+			});
+			const result = await repository.save(updatedTask);
+
+			expect(result.isOk()).toBe(true);
+			expect(markdownClient.applyEdit).toHaveBeenCalledWith(
+				expect.any(String),
+				expect.objectContaining({
+					taskId: 'Test::Task 1',
+					doneStatuses: undefined,
+				}),
+			);
+		});
+
+		it('in-progressからdoneへの変更でもdoneStatusesが渡される', async () => {
+			const existingTask = {
+				id: 'Test::Task 1',
+				title: 'Task 1',
+				status: createStatus('in-progress'),
+				path: Path.create(['Test']),
+				isChecked: false,
+				metadata: {},
+				startLine: 2,
+				endLine: 3,
+			};
+
+			const markdownClient = createMockMarkdownTaskClient({
+				parse: vi.fn().mockReturnValue(
+					ok({
+						tasks: [existingTask],
+						headings: [],
+						warnings: [],
+					}),
+				),
+				applyEdit: vi.fn().mockReturnValue(ok('# Test\n- [x] Task 1\n  - status: done')),
+			});
+			const documentClient = createMockVscodeDocumentClient();
+			const configProvider = createMockConfigProvider();
+
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
+			const updatedTask = createMockTask({
+				id: 'Test::Task 1',
+				title: 'Task 1',
+				status: createStatus('done'),
+				isChecked: true,
+			});
+			const result = await repository.save(updatedTask);
+
+			expect(result.isOk()).toBe(true);
+			expect(markdownClient.applyEdit).toHaveBeenCalledWith(
+				expect.any(String),
+				expect.objectContaining({
+					taskId: 'Test::Task 1',
+					doneStatuses: ['done'],
 				}),
 			);
 		});
@@ -402,8 +561,9 @@ describe('MarkdownTaskRepository', () => {
 				applyEdit: vi.fn().mockReturnValue(ok('# Test')),
 			});
 			const documentClient = createMockVscodeDocumentClient();
+			const configProvider = createMockConfigProvider();
 
-			const repository = new MarkdownTaskRepository(markdownClient, documentClient);
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
 			const result = await repository.delete('Test::Task 1');
 
 			expect(result.isOk()).toBe(true);
@@ -424,8 +584,9 @@ describe('MarkdownTaskRepository', () => {
 				),
 			});
 			const documentClient = createMockVscodeDocumentClient();
+			const configProvider = createMockConfigProvider();
 
-			const repository = new MarkdownTaskRepository(markdownClient, documentClient);
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
 			const result = await repository.delete('nonexistent');
 
 			expect(result.isErr()).toBe(true);
@@ -449,8 +610,9 @@ describe('MarkdownTaskRepository', () => {
 				),
 			});
 			const documentClient = createMockVscodeDocumentClient();
+			const configProvider = createMockConfigProvider();
 
-			const repository = new MarkdownTaskRepository(markdownClient, documentClient);
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
 			const result = await repository.getAvailablePaths();
 
 			expect(result.isOk()).toBe(true);

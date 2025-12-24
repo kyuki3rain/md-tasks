@@ -3,6 +3,7 @@ import { Task } from '../../domain/entities/task';
 import { NoActiveEditorError } from '../../domain/errors/noActiveEditorError';
 import { TaskNotFoundError } from '../../domain/errors/taskNotFoundError';
 import { TaskParseError } from '../../domain/errors/taskParseError';
+import type { ConfigProvider } from '../../domain/ports/configProvider';
 import type { TaskRepository } from '../../domain/ports/taskRepository';
 import type { Path } from '../../domain/valueObjects/path';
 import type { MarkdownTaskClient, ParsedTask } from '../clients/markdownTaskClient';
@@ -17,6 +18,7 @@ export class MarkdownTaskRepository implements TaskRepository {
 	constructor(
 		private readonly markdownClient: MarkdownTaskClient,
 		private readonly documentClient: VscodeDocumentClient,
+		private readonly configProvider: ConfigProvider,
 	) {}
 
 	/**
@@ -93,6 +95,10 @@ export class MarkdownTaskRepository implements TaskRepository {
 
 		const existingTask = parseResult.value.tasks.find((t) => t.id === task.id);
 
+		// 設定を取得してdoneStatusesを決定
+		const config = await this.configProvider.getConfig();
+		const doneStatuses = config.syncCheckboxWithDone ? config.doneStatuses : undefined;
+
 		let editResult: ReturnType<MarkdownTaskClient['applyEdit']>;
 
 		if (existingTask) {
@@ -102,6 +108,7 @@ export class MarkdownTaskRepository implements TaskRepository {
 				newStatus: task.status,
 				newTitle: task.title !== existingTask.title ? task.title : undefined,
 				newPath: !task.path.equals(existingTask.path) ? task.path : undefined,
+				doneStatuses,
 			});
 		} else {
 			// 作成
@@ -111,6 +118,7 @@ export class MarkdownTaskRepository implements TaskRepository {
 					path: task.path,
 					status: task.status,
 				},
+				doneStatuses,
 			});
 		}
 

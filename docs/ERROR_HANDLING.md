@@ -120,7 +120,7 @@
 
 ## エラーの伝播フロー
 
-```
+```text
 Infrastructure層                    Domain層
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 VscodeDocumentClient                TaskRepository Port

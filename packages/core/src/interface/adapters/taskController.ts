@@ -55,7 +55,9 @@ export class TaskController {
 	/**
 	 * 全タスクを取得する
 	 */
-	async getTasks(): Promise<Result<TaskDto[], TaskParseError | NoActiveEditorError>> {
+	async getTasks(): Promise<
+		Result<TaskDto[], TaskParseError | NoActiveEditorError | DocumentOperationError>
+	> {
 		const result = await this.getTasksUseCase.execute();
 		return result.map((tasks) => tasks.map(this.toDto));
 	}

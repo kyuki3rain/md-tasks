@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { Task } from '../../domain/entities/task';
 import { DocumentOperationError } from '../../domain/errors/documentOperationError';
 import { TaskNotFoundError } from '../../domain/errors/taskNotFoundError';
-import { TaskParseError } from '../../domain/errors/taskParseError';
 import type { ConfigProvider, KanbanConfig } from '../../domain/ports/configProvider';
 import { Path } from '../../domain/valueObjects/path';
 import { Status } from '../../domain/valueObjects/status';
@@ -142,7 +141,7 @@ describe('MarkdownTaskRepository', () => {
 
 			expect(result.isErr()).toBe(true);
 			if (result.isErr()) {
-				expect(result.error).toBeInstanceOf(TaskParseError);
+				expect(result.error).toBeInstanceOf(DocumentOperationError);
 			}
 		});
 	});
@@ -817,6 +816,26 @@ describe('MarkdownTaskRepository', () => {
 				expect(result.value).toHaveLength(2);
 				expect(result.value[0].toString()).toBe('Section 1');
 				expect(result.value[1].toString()).toBe('Section 1 / Subsection');
+			}
+		});
+
+		it('ドキュメントがない場合はエラーを返す', async () => {
+			const markdownClient = createMockMarkdownTaskClient();
+			const documentClient = createMockVscodeDocumentClient({
+				getCurrentDocumentText: vi.fn().mockResolvedValue({
+					isErr: () => true,
+					isOk: () => false,
+					error: { message: 'No document' },
+				}),
+			});
+			const configProvider = createMockConfigProvider();
+
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
+			const result = await repository.getAvailablePaths();
+
+			expect(result.isErr()).toBe(true);
+			if (result.isErr()) {
+				expect(result.error).toBeInstanceOf(DocumentOperationError);
 			}
 		});
 	});

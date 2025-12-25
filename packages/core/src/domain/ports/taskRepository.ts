@@ -14,19 +14,23 @@ export interface TaskRepository {
 	/**
 	 * 全タスクを取得する
 	 */
-	findAll(): Promise<Result<Task[], TaskParseError | NoActiveEditorError>>;
+	findAll(): Promise<Result<Task[], TaskParseError | NoActiveEditorError | DocumentOperationError>>;
 
 	/**
 	 * IDでタスクを取得する
 	 */
 	findById(
 		id: string,
-	): Promise<Result<Task, TaskNotFoundError | TaskParseError | NoActiveEditorError>>;
+	): Promise<
+		Result<Task, TaskNotFoundError | TaskParseError | NoActiveEditorError | DocumentOperationError>
+	>;
 
 	/**
 	 * パスでタスクをフィルタリングして取得する
 	 */
-	findByPath(path: Path): Promise<Result<Task[], TaskParseError | NoActiveEditorError>>;
+	findByPath(
+		path: Path,
+	): Promise<Result<Task[], TaskParseError | NoActiveEditorError | DocumentOperationError>>;
 
 	/**
 	 * タスクを保存する（作成または更新）
@@ -43,5 +47,7 @@ export interface TaskRepository {
 	/**
 	 * 利用可能なパス（見出し階層）を全て取得する
 	 */
-	getAvailablePaths(): Promise<Result<Path[], TaskParseError | NoActiveEditorError>>;
+	getAvailablePaths(): Promise<
+		Result<Path[], TaskParseError | NoActiveEditorError | DocumentOperationError>
+	>;
 }

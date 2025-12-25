@@ -25,14 +25,16 @@ export class MarkdownTaskRepository implements TaskRepository {
 	/**
 	 * 全タスクを取得する
 	 */
-	async findAll(): Promise<Result<Task[], TaskParseError | NoActiveEditorError>> {
+	async findAll(): Promise<
+		Result<Task[], TaskParseError | NoActiveEditorError | DocumentOperationError>
+	> {
 		const textResult = await this.documentClient.getCurrentDocumentText();
 		if (textResult.isErr()) {
 			// NoActiveEditorErrorの場合はドメイン層のエラーに変換
 			if (textResult.error instanceof InfraNoActiveEditorError) {
 				return err(new NoActiveEditorError());
 			}
-			return err(new TaskParseError(0, textResult.error.message));
+			return err(new DocumentOperationError(textResult.error.message));
 		}
 
 		const parseResult = this.markdownClient.parse(textResult.value);
@@ -49,7 +51,9 @@ export class MarkdownTaskRepository implements TaskRepository {
 	 */
 	async findById(
 		id: string,
-	): Promise<Result<Task, TaskNotFoundError | TaskParseError | NoActiveEditorError>> {
+	): Promise<
+		Result<Task, TaskNotFoundError | TaskParseError | NoActiveEditorError | DocumentOperationError>
+	> {
 		const allResult = await this.findAll();
 		if (allResult.isErr()) {
 			return err(allResult.error);
@@ -66,7 +70,9 @@ export class MarkdownTaskRepository implements TaskRepository {
 	/**
 	 * パスでタスクをフィルタリングして取得する
 	 */
-	async findByPath(path: Path): Promise<Result<Task[], TaskParseError | NoActiveEditorError>> {
+	async findByPath(
+		path: Path,
+	): Promise<Result<Task[], TaskParseError | NoActiveEditorError | DocumentOperationError>> {
 		const allResult = await this.findAll();
 		if (allResult.isErr()) {
 			return err(allResult.error);
@@ -186,13 +192,15 @@ export class MarkdownTaskRepository implements TaskRepository {
 	/**
 	 * 利用可能なパス（見出し階層）を全て取得する
 	 */
-	async getAvailablePaths(): Promise<Result<Path[], TaskParseError | NoActiveEditorError>> {
+	async getAvailablePaths(): Promise<
+		Result<Path[], TaskParseError | NoActiveEditorError | DocumentOperationError>
+	> {
 		const textResult = await this.documentClient.getCurrentDocumentText();
 		if (textResult.isErr()) {
 			if (textResult.error instanceof InfraNoActiveEditorError) {
 				return err(new NoActiveEditorError());
 			}
-			return err(new TaskParseError(0, textResult.error.message));
+			return err(new DocumentOperationError(textResult.error.message));
 		}
 
 		const parseResult = this.markdownClient.parse(textResult.value);

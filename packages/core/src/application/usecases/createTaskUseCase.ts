@@ -6,6 +6,7 @@ import type { ConfigProvider } from '../../domain/ports/configProvider';
 import type { TaskRepository } from '../../domain/ports/taskRepository';
 import type { Path } from '../../domain/valueObjects/path';
 import { Status } from '../../domain/valueObjects/status';
+import { generateTaskId } from '../../domain/valueObjects/taskId';
 
 /**
  * タスク作成の入力
@@ -37,8 +38,8 @@ export class CreateTaskUseCase {
 		// ステータスが指定されていない場合はデフォルトステータスを使用
 		const status = input.status ?? Status.create(config.defaultStatus)._unsafeUnwrap();
 
-		// IDを生成（パス + タイトル）
-		const id = this.generateTaskId(input.path, input.title);
+		// IDを生成（パス + タイトルのハッシュ）
+		const id = generateTaskId(input.path, input.title);
 
 		// タスクを作成
 		const task = Task.create({
@@ -52,13 +53,5 @@ export class CreateTaskUseCase {
 
 		// リポジトリに保存
 		return this.taskRepository.save(task);
-	}
-
-	/**
-	 * タスクIDを生成する
-	 * MarkdownTaskClientのパース結果と一致する形式で生成
-	 */
-	private generateTaskId(path: Path, title: string): string {
-		return `${path.toString()}::${title}`;
 	}
 }

@@ -17,6 +17,7 @@
 import { describe, expect, it } from 'vitest';
 import { Path } from '../../domain/valueObjects/path';
 import { Status } from '../../domain/valueObjects/status';
+import { generateTaskId } from '../../domain/valueObjects/taskId';
 import { MarkdownTaskClient } from './markdownTaskClient';
 
 describe('MarkdownTaskClient', () => {
@@ -363,16 +364,18 @@ kanban:
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
-				expect(tasks[0].id).toBe('仕事 / プロジェクトA::APIの実装');
+				expect(tasks[0].id).toBe(
+					generateTaskId(Path.create(['仕事', 'プロジェクトA']), 'APIの実装'),
+				);
 			});
 
-			it('ルートパスの場合はタイトルのみがIDになる', () => {
+			it('ルートパスの場合はルートパスとタイトルからIDを生成する', () => {
 				const markdown = '- [ ] タスク1';
 				const result = client.parse(markdown);
 
 				expect(result.isOk()).toBe(true);
 				const { tasks } = result._unsafeUnwrap();
-				expect(tasks[0].id).toBe('（ルート）::タスク1');
+				expect(tasks[0].id).toBe(generateTaskId(Path.create([]), 'タスク1'));
 			});
 		});
 
@@ -457,7 +460,7 @@ kanban:
 			it('タスクのタイトルを更新できる', () => {
 				const markdown = `- [ ] 古いタイトル`;
 				const result = client.applyEdit(markdown, {
-					taskId: '（ルート）::古いタイトル',
+					taskId: generateTaskId(Path.create([]), '古いタイトル'),
 					newTitle: '新しいタイトル',
 				});
 
@@ -472,7 +475,7 @@ kanban:
   - status: todo`;
 				const newStatus = Status.create('in-progress')._unsafeUnwrap();
 				const result = client.applyEdit(markdown, {
-					taskId: '（ルート）::タスク1',
+					taskId: generateTaskId(Path.create([]), 'タスク1'),
 					newStatus,
 				});
 
@@ -485,7 +488,7 @@ kanban:
 				const markdown = `- [ ] タスク1`;
 				const newStatus = Status.create('done')._unsafeUnwrap();
 				const result = client.applyEdit(markdown, {
-					taskId: '（ルート）::タスク1',
+					taskId: generateTaskId(Path.create([]), 'タスク1'),
 					newStatus,
 					doneStatuses: ['done'],
 				});
@@ -500,7 +503,7 @@ kanban:
   - status: done`;
 				const newStatus = Status.create('todo')._unsafeUnwrap();
 				const result = client.applyEdit(markdown, {
-					taskId: '（ルート）::タスク1',
+					taskId: generateTaskId(Path.create([]), 'タスク1'),
 					newStatus,
 					doneStatuses: ['done'],
 				});
@@ -514,7 +517,7 @@ kanban:
 				const markdown = `- [ ] タスク1`;
 				const newStatus = Status.create('in-progress')._unsafeUnwrap();
 				const result = client.applyEdit(markdown, {
-					taskId: '（ルート）::タスク1',
+					taskId: generateTaskId(Path.create([]), 'タスク1'),
 					newStatus,
 				});
 
@@ -531,7 +534,7 @@ kanban:
 
 # 個人`;
 				const result = client.applyEdit(markdown, {
-					taskId: '仕事::タスク1',
+					taskId: generateTaskId(Path.create(['仕事']), 'タスク1'),
 					newPath: Path.create(['個人']),
 				});
 
@@ -547,7 +550,7 @@ kanban:
 
 # 仕事`;
 				const result = client.applyEdit(markdown, {
-					taskId: '（ルート）::ルートタスク',
+					taskId: generateTaskId(Path.create([]), 'ルートタスク'),
 					newPath: Path.create(['仕事']),
 				});
 
@@ -561,7 +564,7 @@ kanban:
 				const markdown = `# 仕事
 - [ ] タスク1`;
 				const result = client.applyEdit(markdown, {
-					taskId: '仕事::タスク1',
+					taskId: generateTaskId(Path.create(['仕事']), 'タスク1'),
 					newPath: Path.create([]),
 				});
 
@@ -579,7 +582,7 @@ kanban:
 # 完了`;
 				const newStatus = Status.create('done')._unsafeUnwrap();
 				const result = client.applyEdit(markdown, {
-					taskId: '仕事::タスク1',
+					taskId: generateTaskId(Path.create(['仕事']), 'タスク1'),
 					newPath: Path.create(['完了']),
 					newStatus,
 					doneStatuses: ['done'],
@@ -597,7 +600,7 @@ kanban:
 
 # 個人`;
 				const result = client.applyEdit(markdown, {
-					taskId: '仕事::古いタイトル',
+					taskId: generateTaskId(Path.create(['仕事']), '古いタイトル'),
 					newPath: Path.create(['個人']),
 					newTitle: '新しいタイトル',
 				});
@@ -612,7 +615,7 @@ kanban:
 				const markdown = `# 仕事
 - [ ] タスク1`;
 				const result = client.applyEdit(markdown, {
-					taskId: '仕事::タスク1',
+					taskId: generateTaskId(Path.create(['仕事']), 'タスク1'),
 					newPath: Path.create(['存在しない']),
 				});
 
@@ -627,7 +630,7 @@ kanban:
 
 # 個人`;
 				const result = client.applyEdit(markdown, {
-					taskId: '仕事::タスク1',
+					taskId: generateTaskId(Path.create(['仕事']), 'タスク1'),
 					newPath: Path.create(['個人']),
 				});
 
@@ -648,7 +651,10 @@ kanban:
 
 # 完了`;
 					const result = client.applyEdit(markdown, {
-						taskId: 'プロジェクト / フェーズ1 / タスク一覧::深いタスク',
+						taskId: generateTaskId(
+							Path.create(['プロジェクト', 'フェーズ1', 'タスク一覧']),
+							'深いタスク',
+						),
 						newPath: Path.create(['完了']),
 					});
 
@@ -665,7 +671,7 @@ kanban:
 ## サブプロジェクト
 ### 詳細`;
 					const result = client.applyEdit(markdown, {
-						taskId: '仕事::タスク1',
+						taskId: generateTaskId(Path.create(['仕事']), 'タスク1'),
 						newPath: Path.create(['仕事', 'サブプロジェクト', '詳細']),
 					});
 
@@ -681,7 +687,7 @@ kanban:
 
 ## 進行中`;
 					const result = client.applyEdit(markdown, {
-						taskId: 'プロジェクト / TODO::タスク1',
+						taskId: generateTaskId(Path.create(['プロジェクト', 'TODO']), 'タスク1'),
 						newPath: Path.create(['プロジェクト', '進行中']),
 					});
 
@@ -702,7 +708,7 @@ kanban:
 - [ ] 既存タスク1
 - [ ] 既存タスク2`;
 					const result = client.applyEdit(markdown, {
-						taskId: '仕事::タスク1',
+						taskId: generateTaskId(Path.create(['仕事']), 'タスク1'),
 						newPath: Path.create(['個人']),
 					});
 
@@ -720,7 +726,7 @@ kanban:
 
 # その他`;
 					const result = client.applyEdit(markdown, {
-						taskId: '仕事::タスク1',
+						taskId: generateTaskId(Path.create(['仕事']), 'タスク1'),
 						newPath: Path.create(['個人']),
 					});
 
@@ -737,7 +743,7 @@ kanban:
 # 仕事
 - [ ] タスク1`;
 					const result = client.applyEdit(markdown, {
-						taskId: '仕事::タスク1',
+						taskId: generateTaskId(Path.create(['仕事']), 'タスク1'),
 						newPath: Path.create([]),
 					});
 
@@ -753,7 +759,7 @@ kanban:
 
 # 個人`;
 					const result = client.applyEdit(markdown, {
-						taskId: '仕事::タスク1',
+						taskId: generateTaskId(Path.create(['仕事']), 'タスク1'),
 						newPath: Path.create([]),
 					});
 
@@ -773,7 +779,7 @@ kanban:
 # 完了`;
 					const newStatus = Status.create('done')._unsafeUnwrap();
 					const result = client.applyEdit(markdown, {
-						taskId: 'TODO::古いタイトル',
+						taskId: generateTaskId(Path.create(['TODO']), '古いタイトル'),
 						newPath: Path.create(['完了']),
 						newStatus,
 						newTitle: '新しいタイトル',
@@ -798,7 +804,7 @@ kanban:
 
 # 個人`;
 					const result = client.applyEdit(markdown, {
-						taskId: '仕事::タスク1',
+						taskId: generateTaskId(Path.create(['仕事']), 'タスク1'),
 						newPath: Path.create(['個人']),
 					});
 
@@ -825,7 +831,7 @@ kanban:
 
 # 個人`;
 					const result = client.applyEdit(markdown, {
-						taskId: '仕事::タスク1',
+						taskId: generateTaskId(Path.create(['仕事']), 'タスク1'),
 						newPath: Path.create(['個人']),
 					});
 
@@ -844,7 +850,7 @@ kanban:
 
 # 個人`;
 					const result = client.applyEdit(markdown, {
-						taskId: '仕事::タスク2',
+						taskId: generateTaskId(Path.create(['仕事']), 'タスク2'),
 						newPath: Path.create(['個人']),
 					});
 
@@ -863,7 +869,7 @@ kanban:
 
 # 個人`;
 					const result = client.applyEdit(markdown, {
-						taskId: '仕事::タスク2',
+						taskId: generateTaskId(Path.create(['仕事']), 'タスク2'),
 						newPath: Path.create(['個人']),
 					});
 
@@ -879,7 +885,7 @@ kanban:
 
 # 個人`;
 					const result = client.applyEdit(markdown, {
-						taskId: '仕事::タスク1',
+						taskId: generateTaskId(Path.create(['仕事']), 'タスク1'),
 						newPath: Path.create(['個人']),
 					});
 
@@ -892,7 +898,7 @@ kanban:
 					const markdown = `# 仕事
 - [ ] タスク1`;
 					const result = client.applyEdit(markdown, {
-						taskId: '仕事::タスク1',
+						taskId: generateTaskId(Path.create(['仕事']), 'タスク1'),
 						newPath: Path.create(['仕事']),
 					});
 
@@ -911,7 +917,7 @@ kanban:
 - [ ] APIの実装`;
 				const newStatus = Status.create('done')._unsafeUnwrap();
 				const result = client.applyEdit(markdown, {
-					taskId: '仕事::APIの実装',
+					taskId: generateTaskId(Path.create(['仕事']), 'APIの実装'),
 					newStatus,
 					doneStatuses: ['done'],
 				});
@@ -929,7 +935,7 @@ kanban:
 				const markdown = `- [ ] タスク1
 - [ ] タスク2`;
 				const result = client.applyEdit(markdown, {
-					taskId: '（ルート）::タスク1',
+					taskId: generateTaskId(Path.create([]), 'タスク1'),
 					delete: true,
 				});
 
@@ -945,7 +951,7 @@ kanban:
   - priority: high
 - [ ] タスク2`;
 				const result = client.applyEdit(markdown, {
-					taskId: '（ルート）::タスク1',
+					taskId: generateTaskId(Path.create([]), 'タスク1'),
 					delete: true,
 				});
 
@@ -1027,7 +1033,7 @@ kanban:
 			it('存在しないタスクIDでエラー', () => {
 				const markdown = '- [ ] タスク1';
 				const result = client.applyEdit(markdown, {
-					taskId: '（ルート）::存在しない',
+					taskId: generateTaskId(Path.create([]), '存在しない'),
 					newTitle: '新しいタイトル',
 				});
 

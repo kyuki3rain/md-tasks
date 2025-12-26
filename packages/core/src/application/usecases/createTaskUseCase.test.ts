@@ -6,6 +6,7 @@ import { DEFAULT_CONFIG } from '../../domain/ports/configProvider';
 import type { TaskRepository } from '../../domain/ports/taskRepository';
 import { Path } from '../../domain/valueObjects/path';
 import { Status } from '../../domain/valueObjects/status';
+import { generateTaskId } from '../../domain/valueObjects/taskId';
 import { CreateTaskUseCase } from './createTaskUseCase';
 
 describe('CreateTaskUseCase', () => {
@@ -29,9 +30,10 @@ describe('CreateTaskUseCase', () => {
 		it('新しいタスクを作成できる', async () => {
 			const path = Path.create(['Project', 'Feature A']);
 			const title = 'New Task';
+			const expectedId = generateTaskId(path, title);
 
 			const savedTask = Task.create({
-				id: 'Project / Feature A::New Task',
+				id: expectedId,
 				title,
 				status: Status.create('todo')._unsafeUnwrap(),
 				path,
@@ -52,6 +54,10 @@ describe('CreateTaskUseCase', () => {
 			expect(task.title).toBe(title);
 			expect(task.path.equals(path)).toBe(true);
 			expect(repository.save).toHaveBeenCalled();
+
+			// saveに渡されたタスクのIDが正しい形式か確認
+			const saveCall = (repository.save as ReturnType<typeof vi.fn>).mock.calls[0][0] as Task;
+			expect(saveCall.id).toBe(expectedId);
 		});
 
 		it('ステータスを指定してタスクを作成できる', async () => {
@@ -60,7 +66,7 @@ describe('CreateTaskUseCase', () => {
 			const status = Status.create('in-progress')._unsafeUnwrap();
 
 			const savedTask = Task.create({
-				id: 'Project::Task with status',
+				id: generateTaskId(path, title),
 				title,
 				status,
 				path,
@@ -86,7 +92,7 @@ describe('CreateTaskUseCase', () => {
 			const title = 'Task without status';
 
 			const savedTask = Task.create({
-				id: 'Project::Task without status',
+				id: generateTaskId(path, title),
 				title,
 				status: Status.create('todo')._unsafeUnwrap(),
 				path,
@@ -118,7 +124,7 @@ describe('CreateTaskUseCase', () => {
 			const metadata = { priority: 'high', assignee: 'alice' };
 
 			const savedTask = Task.create({
-				id: 'Project::Task with metadata',
+				id: generateTaskId(path, title),
 				title,
 				status: Status.create('todo')._unsafeUnwrap(),
 				path,

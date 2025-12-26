@@ -3,6 +3,7 @@ import { err, ok, type Result } from 'neverthrow';
 import type { TaskMetadata } from '../../domain/entities/task';
 import { Path } from '../../domain/valueObjects/path';
 import { Status } from '../../domain/valueObjects/status';
+import { generateTaskId } from '../../domain/valueObjects/taskId';
 import { RemarkClient } from '../clients/remarkClient';
 
 /**
@@ -378,8 +379,8 @@ export class MarkdownTaskClient {
 		// メタデータからstatusを削除（エンティティのstatusに移動したため）
 		const { status: _status, ...otherMetadata } = metadata;
 
-		// IDを生成
-		const id = this.generateTaskId(path, title);
+		// IDを生成（ハッシュベース）
+		const id = generateTaskId(path, title);
 
 		const startLine = (item.position?.start.line ?? 0) + lineOffset;
 		const actualEndLine = endLine + lineOffset;
@@ -474,34 +475,29 @@ export class MarkdownTaskClient {
 	}
 
 	/**
-	 * タスクIDを生成
-	 */
-	private generateTaskId(path: Path, title: string): string {
-		return `${path.toString()}::${title}`;
-	}
-
-	/**
 	 * 重複タスクを検出
 	 */
 	private detectDuplicates(tasks: ParsedTask[], warnings: string[]): void {
-		const seen = new Map<string, number[]>();
+		const seen = new Map<string, { lines: number[]; title: string; path: string }>();
 
-		for (let i = 0; i < tasks.length; i++) {
-			const task = tasks[i];
+		for (const task of tasks) {
 			const key = task.id;
+			const existing = seen.get(key);
 
-			if (seen.has(key)) {
-				seen.get(key)?.push(task.startLine);
+			if (existing) {
+				existing.lines.push(task.startLine);
 			} else {
-				seen.set(key, [task.startLine]);
+				seen.set(key, {
+					lines: [task.startLine],
+					title: task.title,
+					path: task.path.toString(),
+				});
 			}
 		}
 
-		for (const [id, lines] of seen.entries()) {
+		for (const { lines, title, path } of seen.values()) {
 			if (lines.length > 1) {
-				// IDからタイトルとパスを抽出
-				const [pathStr, title] = id.split('::');
-				warnings.push(`⚠ 重複タスクを検出: "${title}" (${pathStr}) - ${lines.join('行目, ')}行目`);
+				warnings.push(`⚠ 重複タスクを検出: "${title}" (${path}) - ${lines.join('行目, ')}行目`);
 			}
 		}
 	}

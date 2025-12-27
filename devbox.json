@@ -6,12 +6,25 @@
   ],
   "shell": {
     "init_hook": [
-      "echo 'Welcome to devbox!' > /dev/null"
+      "echo 'Markdown Kanban development environment ready!' > /dev/null"
     ],
     "scripts": {
-      "test": [
-        "echo \"Error: no test specified\" && exit 1"
-      ]
+      "setup": "pnpm install",
+      "compile": "pnpm run compile",
+      "compile:core": "pnpm run compile:core",
+      "compile:webview": "pnpm run compile:webview",
+      "watch": "pnpm run watch",
+      "watch:webview": "pnpm run watch:webview",
+      "package": "pnpm run package",
+      "check-types": "pnpm run check-types",
+      "lint": "pnpm run lint",
+      "lint:fix": "pnpm run lint:fix",
+      "format": "pnpm run format",
+      "test": "pnpm run test",
+      "test:watch": "pnpm run test:watch",
+      "test:coverage": "pnpm run test:coverage",
+      "test:e2e": "pnpm run test:e2e",
+      "ci": "pnpm run check-types && pnpm run lint && pnpm run test"
     }
   }
 }

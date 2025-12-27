@@ -58,6 +58,7 @@ src/
 
 #### 1.1 開発環境のセットアップ
 
+- [x] devboxによる開発環境管理（Node.js 24, pnpm）
 - [x] pnpmでの依存関係管理を確認
 - [x] Biomeの導入（ESLint/Prettierから移行）
 - [x] Vitestの導入

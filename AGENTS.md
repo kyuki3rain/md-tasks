@@ -31,6 +31,7 @@
 
 | 項目 | 技術 |
 |------|------|
+| 開発環境管理 | devbox（Nixベース） |
 | 言語 | TypeScript（strict mode） |
 | ランタイム | Node.js 24 |
 | パッケージマネージャ | pnpm (workspace) |
@@ -46,61 +47,81 @@
 
 ---
 
+## 開発環境セットアップ
+
+このプロジェクトは **devbox** を使用して開発環境を管理する。devboxはNixベースのパッケージマネージャで、Node.jsやpnpmを含む開発ツールをプロジェクトごとに隔離して管理できる。
+
+### 前提条件
+
+- devboxがインストールされていること
+
+### devboxのインストール（未インストールの場合）
+
+```bash
+curl -fsSL https://get.jetify.com/devbox | bash
+```
+
+### ゼロからの環境構築手順
+
+```bash
+# 1. devbox環境をセットアップ（pnpm, Node.js 24をインストール）
+devbox install
+
+# 2. 依存関係のインストール
+devbox run setup
+```
+
+これで開発準備が完了する。
+
+---
+
 ## 開発コマンド
+
+全てのコマンドは `devbox run <command>` で実行する。devbox shellに入っている場合は `pnpm run <command>` でも可。
 
 ### 基本コマンド
 
-```bash
-# 依存関係のインストール
-pnpm install
-
-# ビルド（型チェック + Lint + コンパイル）
-pnpm run compile
-
-# 型チェックのみ
-pnpm run check-types
-
-# Lint
-pnpm run lint
-
-# Lint（自動修正）
-pnpm run lint:fix
-
-# フォーマット
-pnpm run format
-```
+| コマンド | 説明 |
+|---------|------|
+| `devbox run setup` | 依存関係のインストール（pnpm install） |
+| `devbox run compile` | ビルド（型チェック + Lint + コンパイル） |
+| `devbox run check-types` | 型チェックのみ |
+| `devbox run lint` | Lint |
+| `devbox run lint:fix` | Lint（自動修正） |
+| `devbox run format` | フォーマット |
+| `devbox run ci` | CI用チェック（型チェック + Lint + テスト） |
 
 ### テスト
 
-```bash
-# テスト実行
-pnpm run test
-
-# テスト（ウォッチモード）
-pnpm run test:watch
-
-# テスト（カバレッジ付き）
-pnpm run test:coverage
-
-# E2Eテスト
-pnpm run test:e2e
-```
+| コマンド | 説明 |
+|---------|------|
+| `devbox run test` | テスト実行 |
+| `devbox run test:watch` | テスト（ウォッチモード） |
+| `devbox run test:coverage` | テスト（カバレッジ付き） |
+| `devbox run test:e2e` | E2Eテスト |
 
 ### 開発モード
 
-```bash
-# ウォッチモード（Extension + WebView）
-pnpm run watch
-
-# WebViewのみウォッチモード
-pnpm --filter @markdown-kanban/webview run watch
-```
+| コマンド | 説明 |
+|---------|------|
+| `devbox run watch` | ウォッチモード（Extension + WebView） |
+| `devbox run watch:webview` | WebViewのみウォッチモード |
 
 ### パッケージング
 
+| コマンド | 説明 |
+|---------|------|
+| `devbox run package` | 本番ビルド |
+
+### devbox shellを使う場合
+
 ```bash
-# 本番ビルド
-pnpm run package
+# devbox shellに入る
+devbox shell
+
+# shell内では通常のpnpmコマンドが使える
+pnpm run test
+pnpm run compile
 ```
 
 ---
@@ -188,7 +209,7 @@ markdown-kanban/
 ### 完了済みフェーズ
 
 - ✅ Phase 1: 基盤構築
-  - 開発環境セットアップ（pnpm, Biome, Vitest, TypeScript strict mode）
+  - 開発環境セットアップ（devbox, pnpm, Biome, Vitest, TypeScript strict mode）
   - プロジェクト構造整備（クリーンアーキテクチャ）
   - 共有ユーティリティ（Logger, neverthrow, Zod）
   - WebView環境構築（Vite, React, Tailwind CSS v4, shadcn/ui）

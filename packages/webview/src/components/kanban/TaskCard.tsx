@@ -1,5 +1,4 @@
 import { useDraggable } from '@dnd-kit/core';
-import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { TaskDto } from '../../types';
@@ -8,21 +7,16 @@ import { PathBadge } from './PathBadge';
 interface TaskCardProps {
 	task: TaskDto;
 	onClick?: (task: TaskDto) => void;
-	isDragging?: boolean;
 }
 
 /**
  * タスクカードコンポーネント
  */
-export function TaskCard({ task, onClick, isDragging }: TaskCardProps) {
-	const { attributes, listeners, setNodeRef, transform } = useDraggable({
+export function TaskCard({ task, onClick }: TaskCardProps) {
+	const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
 		id: task.id,
 		data: { task },
 	});
-
-	const style = {
-		transform: CSS.Translate.toString(transform),
-	};
 
 	const handleClick = () => {
 		onClick?.(task);
@@ -32,12 +26,12 @@ export function TaskCard({ task, onClick, isDragging }: TaskCardProps) {
 		<button
 			ref={setNodeRef}
 			type="button"
-			style={style}
 			className={cn(
 				'group relative w-full text-left bg-card border border-border rounded-lg p-3 shadow-sm',
-				'hover:shadow-md hover:border-primary/50 transition-all duration-200',
 				'cursor-pointer select-none',
-				isDragging && 'opacity-50 shadow-lg ring-2 ring-primary',
+				isDragging
+					? 'invisible'
+					: 'hover:shadow-md hover:border-primary/50 transition-all duration-200',
 			)}
 			onClick={handleClick}
 		>

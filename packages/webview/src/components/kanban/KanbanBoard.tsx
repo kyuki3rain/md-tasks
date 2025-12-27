@@ -29,7 +29,6 @@ interface ModalState {
 export function KanbanBoard() {
 	const { tasksByStatus, config, paths, isLoading, error, isDirty, actions } = useKanban();
 
-	const [activeId, setActiveId] = useState<string | null>(null);
 	const [activeTask, setActiveTask] = useState<TaskDto | null>(null);
 	const [modal, setModal] = useState<ModalState>({
 		isOpen: false,
@@ -49,7 +48,6 @@ export function KanbanBoard() {
 	// ドラッグ開始
 	const handleDragStart = useCallback((event: DragStartEvent) => {
 		const { active } = event;
-		setActiveId(active.id as string);
 		setActiveTask(active.data.current?.task ?? null);
 	}, []);
 
@@ -58,7 +56,6 @@ export function KanbanBoard() {
 		(event: DragEndEvent) => {
 			const { active, over } = event;
 
-			setActiveId(null);
 			setActiveTask(null);
 
 			if (!over) return;
@@ -187,13 +184,14 @@ export function KanbanBoard() {
 							isDone={config.doneStatuses.includes(status)}
 							onTaskClick={handleTaskClick}
 							onAddTask={handleAddTask}
-							activeId={activeId}
 						/>
 					))}
 				</div>
 
 				{/* ドラッグオーバーレイ */}
-				<DragOverlay>{activeTask && <TaskCardOverlay task={activeTask} />}</DragOverlay>
+				<DragOverlay dropAnimation={null}>
+					{activeTask && <TaskCardOverlay task={activeTask} />}
+				</DragOverlay>
 			</DndContext>
 
 			{/* タスクモーダル */}

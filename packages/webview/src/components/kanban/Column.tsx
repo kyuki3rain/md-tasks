@@ -10,13 +10,12 @@ interface ColumnProps {
 	isDone?: boolean;
 	onTaskClick?: (task: TaskDto) => void;
 	onAddTask?: (status: string) => void;
-	activeId?: string | null;
 }
 
 /**
  * カラムコンポーネント（ステータスごとのタスク一覧）
  */
-export function Column({ status, tasks, isDone, onTaskClick, onAddTask, activeId }: ColumnProps) {
+export function Column({ status, tasks, isDone, onTaskClick, onAddTask }: ColumnProps) {
 	const { isOver, setNodeRef } = useDroppable({
 		id: status,
 		data: { status },
@@ -60,12 +59,7 @@ export function Column({ status, tasks, isDone, onTaskClick, onAddTask, activeId
 				)}
 			>
 				{tasks.map((task) => (
-					<TaskCard
-						key={task.id}
-						task={task}
-						onClick={onTaskClick}
-						isDragging={activeId === task.id}
-					/>
+					<TaskCard key={task.id} task={task} onClick={onTaskClick} />
 				))}
 
 				{/* 空状態 */}

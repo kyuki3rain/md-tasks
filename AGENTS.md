@@ -294,6 +294,18 @@ markdown-kanban/
 2. `package.json` のconfiguration項目を更新
 3. ConfigProviderポートを更新
 
+### カバレッジ分析
+
+品質チェックやリファクタリング時にカバレッジを確認する。
+
+```bash
+pnpm run test:coverage
+```
+
+- レポート出力先: `packages/core/coverage/`
+- HTMLレポート: `packages/core/coverage/index.html` をブラウザで開く
+- 閾値: statements 80%, branches 70%, functions 85%, lines 80%
+
 ---
 
 ## 注意事項

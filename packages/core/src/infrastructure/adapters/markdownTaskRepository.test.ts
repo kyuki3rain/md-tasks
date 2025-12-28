@@ -2,7 +2,9 @@ import { err, ok } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
 import { Task } from '../../domain/entities/task';
 import { DocumentOperationError } from '../../domain/errors/documentOperationError';
+import { NoActiveEditorError as DomainNoActiveEditorError } from '../../domain/errors/noActiveEditorError';
 import { TaskNotFoundError } from '../../domain/errors/taskNotFoundError';
+import { TaskParseError } from '../../domain/errors/taskParseError';
 import type { ConfigProvider, KanbanConfig } from '../../domain/ports/configProvider';
 import { Path } from '../../domain/valueObjects/path';
 import { Status } from '../../domain/valueObjects/status';
@@ -12,7 +14,12 @@ import type {
 	SerializerError,
 } from '../clients/markdownTaskClient';
 import type { VscodeDocumentClient } from '../clients/vscodeDocumentClient';
-import { DocumentEditError, DocumentNotFoundError } from '../clients/vscodeDocumentClient';
+import {
+	DocumentEditError,
+	DocumentNotFoundError,
+	NoActiveEditorError,
+} from '../clients/vscodeDocumentClient';
+import { MarkdownParseError } from '../clients/markdownTaskClient';
 import { MarkdownTaskRepository } from './markdownTaskRepository';
 
 // テスト用ヘルパー: 確実に成功するステータスを作成
@@ -140,6 +147,40 @@ describe('MarkdownTaskRepository', () => {
 			expect(result.isErr()).toBe(true);
 			if (result.isErr()) {
 				expect(result.error).toBeInstanceOf(DocumentOperationError);
+			}
+		});
+
+		it('アクティブなエディタがない場合はNoActiveEditorErrorを返す', async () => {
+			const markdownClient = createMockMarkdownTaskClient();
+			const documentClient = createMockVscodeDocumentClient({
+				getCurrentDocumentText: vi
+					.fn()
+					.mockResolvedValue(err(new NoActiveEditorError('No active editor'))),
+			});
+			const configProvider = createMockConfigProvider();
+
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
+			const result = await repository.findAll();
+
+			expect(result.isErr()).toBe(true);
+			if (result.isErr()) {
+				expect(result.error).toBeInstanceOf(DomainNoActiveEditorError);
+			}
+		});
+
+		it('パースエラーの場合はTaskParseErrorを返す', async () => {
+			const markdownClient = createMockMarkdownTaskClient({
+				parse: vi.fn().mockReturnValue(err(new MarkdownParseError('Invalid markdown'))),
+			});
+			const documentClient = createMockVscodeDocumentClient();
+			const configProvider = createMockConfigProvider();
+
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
+			const result = await repository.findAll();
+
+			expect(result.isErr()).toBe(true);
+			if (result.isErr()) {
+				expect(result.error).toBeInstanceOf(TaskParseError);
 			}
 		});
 	});
@@ -603,6 +644,85 @@ describe('MarkdownTaskRepository', () => {
 			}
 		});
 
+		it('アクティブなエディタがない場合はNoActiveEditorErrorを返す', async () => {
+			const documentClient = createMockVscodeDocumentClient({
+				getCurrentDocumentText: vi
+					.fn()
+					.mockResolvedValue(err(new NoActiveEditorError('No active editor'))),
+			});
+			const markdownClient = createMockMarkdownTaskClient();
+			const configProvider = createMockConfigProvider();
+
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
+			const task = createMockTask();
+			const result = await repository.save(task);
+
+			expect(result.isErr()).toBe(true);
+			if (result.isErr()) {
+				expect(result.error).toBeInstanceOf(DomainNoActiveEditorError);
+			}
+		});
+
+		it('replaceDocumentTextがNoActiveEditorErrorを返す場合はNoActiveEditorErrorを返す', async () => {
+			const existingTask = {
+				id: 'Test::Task 1',
+				title: 'Task 1',
+				status: createStatus('todo'),
+				path: Path.create(['Test']),
+				isChecked: false,
+				metadata: {},
+				startLine: 2,
+				endLine: 3,
+			};
+
+			const markdownClient = createMockMarkdownTaskClient({
+				parse: vi.fn().mockReturnValue(
+					ok({
+						tasks: [existingTask],
+						headings: [],
+						warnings: [],
+					}),
+				),
+				applyEdit: vi.fn().mockReturnValue(ok('# Test\n- [x] Task 1\n  - status: done')),
+			});
+			const documentClient = createMockVscodeDocumentClient({
+				replaceDocumentText: vi
+					.fn()
+					.mockResolvedValue(err(new NoActiveEditorError('No active editor'))),
+			});
+			const configProvider = createMockConfigProvider();
+
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
+			const updatedTask = createMockTask({
+				id: 'Test::Task 1',
+				title: 'Task 1',
+				status: createStatus('done'),
+			});
+			const result = await repository.save(updatedTask);
+
+			expect(result.isErr()).toBe(true);
+			if (result.isErr()) {
+				expect(result.error).toBeInstanceOf(DomainNoActiveEditorError);
+			}
+		});
+
+		it('パースエラーの場合はDocumentOperationErrorを返す', async () => {
+			const markdownClient = createMockMarkdownTaskClient({
+				parse: vi.fn().mockReturnValue(err(new MarkdownParseError('Invalid markdown'))),
+			});
+			const documentClient = createMockVscodeDocumentClient();
+			const configProvider = createMockConfigProvider();
+
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
+			const task = createMockTask();
+			const result = await repository.save(task);
+
+			expect(result.isErr()).toBe(true);
+			if (result.isErr()) {
+				expect(result.error).toBeInstanceOf(DocumentOperationError);
+			}
+		});
+
 		it('編集生成が失敗した場合はDocumentOperationErrorを返す', async () => {
 			const markdownClient = createMockMarkdownTaskClient({
 				parse: vi.fn().mockReturnValue(
@@ -750,6 +870,78 @@ describe('MarkdownTaskRepository', () => {
 			}
 		});
 
+		it('アクティブなエディタがない場合はNoActiveEditorErrorを返す', async () => {
+			const documentClient = createMockVscodeDocumentClient({
+				getCurrentDocumentText: vi
+					.fn()
+					.mockResolvedValue(err(new NoActiveEditorError('No active editor'))),
+			});
+			const markdownClient = createMockMarkdownTaskClient();
+			const configProvider = createMockConfigProvider();
+
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
+			const result = await repository.delete('Test::Task 1');
+
+			expect(result.isErr()).toBe(true);
+			if (result.isErr()) {
+				expect(result.error).toBeInstanceOf(DomainNoActiveEditorError);
+			}
+		});
+
+		it('replaceDocumentTextがNoActiveEditorErrorを返す場合はNoActiveEditorErrorを返す', async () => {
+			const existingTask = {
+				id: 'Test::Task 1',
+				title: 'Task 1',
+				status: createStatus('todo'),
+				path: Path.create(['Test']),
+				isChecked: false,
+				metadata: {},
+				startLine: 2,
+				endLine: 3,
+			};
+
+			const markdownClient = createMockMarkdownTaskClient({
+				parse: vi.fn().mockReturnValue(
+					ok({
+						tasks: [existingTask],
+						headings: [],
+						warnings: [],
+					}),
+				),
+				applyEdit: vi.fn().mockReturnValue(ok('# Test')),
+			});
+			const documentClient = createMockVscodeDocumentClient({
+				replaceDocumentText: vi
+					.fn()
+					.mockResolvedValue(err(new NoActiveEditorError('No active editor'))),
+			});
+			const configProvider = createMockConfigProvider();
+
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
+			const result = await repository.delete('Test::Task 1');
+
+			expect(result.isErr()).toBe(true);
+			if (result.isErr()) {
+				expect(result.error).toBeInstanceOf(DomainNoActiveEditorError);
+			}
+		});
+
+		it('パースエラーの場合はDocumentOperationErrorを返す', async () => {
+			const markdownClient = createMockMarkdownTaskClient({
+				parse: vi.fn().mockReturnValue(err(new MarkdownParseError('Invalid markdown'))),
+			});
+			const documentClient = createMockVscodeDocumentClient();
+			const configProvider = createMockConfigProvider();
+
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
+			const result = await repository.delete('Test::Task 1');
+
+			expect(result.isErr()).toBe(true);
+			if (result.isErr()) {
+				expect(result.error).toBeInstanceOf(DocumentOperationError);
+			}
+		});
+
 		it('編集生成が失敗した場合はDocumentOperationErrorを返す', async () => {
 			const existingTask = {
 				id: 'Test::Task 1',
@@ -832,6 +1024,40 @@ describe('MarkdownTaskRepository', () => {
 			expect(result.isErr()).toBe(true);
 			if (result.isErr()) {
 				expect(result.error).toBeInstanceOf(DocumentOperationError);
+			}
+		});
+
+		it('アクティブなエディタがない場合はNoActiveEditorErrorを返す', async () => {
+			const markdownClient = createMockMarkdownTaskClient();
+			const documentClient = createMockVscodeDocumentClient({
+				getCurrentDocumentText: vi
+					.fn()
+					.mockResolvedValue(err(new NoActiveEditorError('No active editor'))),
+			});
+			const configProvider = createMockConfigProvider();
+
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
+			const result = await repository.getAvailablePaths();
+
+			expect(result.isErr()).toBe(true);
+			if (result.isErr()) {
+				expect(result.error).toBeInstanceOf(DomainNoActiveEditorError);
+			}
+		});
+
+		it('パースエラーの場合はTaskParseErrorを返す', async () => {
+			const markdownClient = createMockMarkdownTaskClient({
+				parse: vi.fn().mockReturnValue(err(new MarkdownParseError('Invalid markdown'))),
+			});
+			const documentClient = createMockVscodeDocumentClient();
+			const configProvider = createMockConfigProvider();
+
+			const repository = new MarkdownTaskRepository(markdownClient, documentClient, configProvider);
+			const result = await repository.getAvailablePaths();
+
+			expect(result.isErr()).toBe(true);
+			if (result.isErr()) {
+				expect(result.error).toBeInstanceOf(TaskParseError);
 			}
 		});
 	});

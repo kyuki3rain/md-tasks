@@ -320,6 +320,169 @@ describe('VscodeDocumentClient', () => {
 		});
 	});
 
+	describe('setCurrentDocumentUri and getCurrentDocumentUri', () => {
+		it('URIを設定して取得できる', () => {
+			const mockUri = createMockUri('/test/file.md');
+			const deps = createMockDeps();
+			const client = new VscodeDocumentClient(deps);
+
+			client.setCurrentDocumentUri(mockUri);
+			const result = client.getCurrentDocumentUri();
+
+			expect(result).toBe(mockUri);
+		});
+
+		it('undefinedを設定できる', () => {
+			const deps = createMockDeps();
+			const client = new VscodeDocumentClient(deps);
+
+			client.setCurrentDocumentUri(undefined);
+			const result = client.getCurrentDocumentUri();
+
+			expect(result).toBeUndefined();
+		});
+	});
+
+	describe('getCurrentDocumentText', () => {
+		it('currentDocumentUriがセットされている場合はそれを使用する', async () => {
+			const mockUri = createMockUri('/test/file.md');
+			const expectedText = '# From current document';
+
+			const deps = createMockDeps({
+				openTextDocument: vi.fn().mockResolvedValue({ getText: () => expectedText }),
+			});
+			const client = new VscodeDocumentClient(deps);
+			client.setCurrentDocumentUri(mockUri);
+
+			const result = await client.getCurrentDocumentText();
+
+			expect(result.isOk()).toBe(true);
+			if (result.isOk()) {
+				expect(result.value).toBe(expectedText);
+			}
+			expect(deps.openTextDocument).toHaveBeenCalledWith(mockUri);
+		});
+
+		it('currentDocumentUriがない場合はactiveTextEditorを使用する', async () => {
+			const mockUri = createMockUri('/active/file.md');
+			const expectedText = '# From active editor';
+			const mockDocument = {
+				uri: mockUri,
+				getText: () => expectedText,
+				languageId: 'markdown',
+				lineCount: 1,
+			};
+			const mockEditor = { document: mockDocument };
+
+			const deps = createMockDeps({
+				getActiveTextEditor: vi.fn().mockReturnValue(mockEditor),
+			});
+			const client = new VscodeDocumentClient(deps);
+			// currentDocumentUri is not set
+
+			const result = await client.getCurrentDocumentText();
+
+			expect(result.isOk()).toBe(true);
+			if (result.isOk()) {
+				expect(result.value).toBe(expectedText);
+			}
+		});
+	});
+
+	describe('getCurrentDocumentUriOrActive', () => {
+		it('currentDocumentUriがセットされている場合はそれを返す', () => {
+			const mockUri = createMockUri('/current/file.md');
+			const deps = createMockDeps();
+			const client = new VscodeDocumentClient(deps);
+			client.setCurrentDocumentUri(mockUri);
+
+			const result = client.getCurrentDocumentUriOrActive();
+
+			expect(result.isOk()).toBe(true);
+			if (result.isOk()) {
+				expect(result.value).toBe(mockUri);
+			}
+		});
+
+		it('currentDocumentUriがない場合はactiveTextEditorのURIを返す', () => {
+			const mockUri = createMockUri('/active/file.md');
+			const mockDocument = {
+				uri: mockUri,
+				getText: () => '',
+				languageId: 'markdown',
+				lineCount: 0,
+			};
+			const mockEditor = { document: mockDocument };
+
+			const deps = createMockDeps({
+				getActiveTextEditor: vi.fn().mockReturnValue(mockEditor),
+			});
+			const client = new VscodeDocumentClient(deps);
+			// currentDocumentUri is not set
+
+			const result = client.getCurrentDocumentUriOrActive();
+
+			expect(result.isOk()).toBe(true);
+			if (result.isOk()) {
+				expect(result.value).toBe(mockUri);
+			}
+		});
+	});
+
+	describe('replaceDocumentText with currentDocumentUri', () => {
+		it('currentDocumentUriがセットされている場合はそれを使用する', async () => {
+			const mockUri = createMockUri('/current/file.md');
+			const originalText = '# Original';
+			const newText = '# Updated';
+			const mockReplace = vi.fn();
+
+			const mockDocument = {
+				uri: mockUri,
+				getText: () => originalText,
+				lineCount: 1,
+			};
+
+			const deps = createMockDeps({
+				openTextDocument: vi.fn().mockResolvedValue(mockDocument),
+				createWorkspaceEdit: vi.fn().mockReturnValue({ replace: mockReplace }),
+				applyEdit: vi.fn().mockResolvedValue(true),
+			});
+			const client = new VscodeDocumentClient(deps);
+			client.setCurrentDocumentUri(mockUri);
+
+			const result = await client.replaceDocumentText(newText);
+
+			expect(result.isOk()).toBe(true);
+			expect(deps.openTextDocument).toHaveBeenCalledWith(mockUri);
+			expect(mockReplace).toHaveBeenCalledWith(mockUri, expect.anything(), newText);
+		});
+
+		it('openTextDocumentが失敗した場合はDocumentNotFoundErrorを返す', async () => {
+			const mockUri = createMockUri('/test/file.md');
+			const mockDocument = {
+				uri: mockUri,
+				getText: () => '',
+				languageId: 'markdown',
+				lineCount: 0,
+			};
+			const mockEditor = { document: mockDocument };
+
+			const deps = createMockDeps({
+				getActiveTextEditor: vi.fn().mockReturnValue(mockEditor),
+				openTextDocument: vi.fn().mockRejectedValue(new Error('File not found')),
+			});
+			const client = new VscodeDocumentClient(deps);
+
+			const result = await client.replaceDocumentText('new text');
+
+			expect(result.isErr()).toBe(true);
+			if (result.isErr()) {
+				expect(result.error).toBeInstanceOf(DocumentNotFoundError);
+				expect(result.error.message).toContain('File not found');
+			}
+		});
+	});
+
 	describe('revertDocument', () => {
 		it('ドキュメントの変更を破棄できる', async () => {
 			const mockUri = createMockUri('/test/file.md');

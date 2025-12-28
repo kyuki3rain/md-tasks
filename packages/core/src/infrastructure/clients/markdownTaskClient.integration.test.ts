@@ -453,6 +453,133 @@ kanban:
 				expect(headings[3].segments).toEqual(['個人']);
 			});
 		});
+
+		describe('フロントマター設定のエッジケース', () => {
+			it('kanbanが文字列の場合は設定を無視する', () => {
+				const markdown = `---
+kanban: "not-an-object"
+---
+
+- [ ] タスク1`;
+				const result = client.parse(markdown);
+
+				expect(result.isOk()).toBe(true);
+				const { config } = result._unsafeUnwrap();
+				expect(config).toBeUndefined();
+			});
+
+			it('kanbanがnullの場合は設定を無視する', () => {
+				const markdown = `---
+kanban: null
+---
+
+- [ ] タスク1`;
+				const result = client.parse(markdown);
+
+				expect(result.isOk()).toBe(true);
+				const { config } = result._unsafeUnwrap();
+				expect(config).toBeUndefined();
+			});
+
+			it('statusesが配列でない場合はundefinedになる', () => {
+				const markdown = `---
+kanban:
+  statuses: "not-an-array"
+---
+
+- [ ] タスク1`;
+				const result = client.parse(markdown);
+
+				expect(result.isOk()).toBe(true);
+				const { config } = result._unsafeUnwrap();
+				expect(config?.statuses).toBeUndefined();
+			});
+
+			it('syncCheckboxWithDoneがbooleanでない場合はundefinedになる', () => {
+				const markdown = `---
+kanban:
+  syncCheckboxWithDone: "true"
+---
+
+- [ ] タスク1`;
+				const result = client.parse(markdown);
+
+				expect(result.isOk()).toBe(true);
+				const { config } = result._unsafeUnwrap();
+				expect(config?.syncCheckboxWithDone).toBeUndefined();
+			});
+
+			it('sortByが数値の場合はundefinedになる', () => {
+				const markdown = `---
+kanban:
+  sortBy: 123
+---
+
+- [ ] タスク1`;
+				const result = client.parse(markdown);
+
+				expect(result.isOk()).toBe(true);
+				const { config } = result._unsafeUnwrap();
+				expect(config?.sortBy).toBeUndefined();
+			});
+		});
+
+		describe('ステータス決定ロジック', () => {
+			it('未チェックでステータス指定なしの場合、defaultStatusを使用する', () => {
+				const markdown = `---
+kanban:
+  defaultStatus: backlog
+---
+
+- [ ] タスク1`;
+				const result = client.parse(markdown);
+
+				expect(result.isOk()).toBe(true);
+				const { tasks } = result._unsafeUnwrap();
+				expect(tasks[0].status.value).toBe('backlog');
+			});
+
+			it('チェック済みでステータス指定なしの場合、defaultDoneStatusを使用する', () => {
+				const markdown = `---
+kanban:
+  defaultDoneStatus: completed
+---
+
+- [x] タスク1`;
+				const result = client.parse(markdown);
+
+				expect(result.isOk()).toBe(true);
+				const { tasks } = result._unsafeUnwrap();
+				expect(tasks[0].status.value).toBe('completed');
+			});
+		});
+
+		describe('ネストしたリストの処理', () => {
+			it('通常リスト内のチェックボックスも認識する', () => {
+				const markdown = `- 通常項目1
+  - [ ] ネストしたタスク
+- 通常項目2`;
+				const result = client.parse(markdown);
+
+				expect(result.isOk()).toBe(true);
+				const { tasks } = result._unsafeUnwrap();
+				expect(tasks).toHaveLength(1);
+				expect(tasks[0].title).toBe('ネストしたタスク');
+			});
+		});
+
+		describe('空タイトルの処理', () => {
+			it('タイトルが空のチェックボックスは無視される', () => {
+				const markdown = `- [ ]
+- [ ] 有効なタスク`;
+				const result = client.parse(markdown);
+
+				expect(result.isOk()).toBe(true);
+				const { tasks } = result._unsafeUnwrap();
+				// 空タイトルはnullを返すのでフィルタされる
+				expect(tasks.every((t) => t.title.length > 0)).toBe(true);
+			});
+		});
 	});
 
 	describe('applyEdit', () => {

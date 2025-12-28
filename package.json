@@ -2,7 +2,7 @@
   "name": "markdown-kanban",
   "displayName": "Markdown Kanban",
   "description": "View and manage TODO lists in Markdown files as a Kanban board",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/kyuki3rain/markdown-kanban.git"

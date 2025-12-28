@@ -5,8 +5,11 @@ node_modules/**
 **/node_modules/**
 packages/**/src/**
 packages/**/coverage/**
+packages/**/package.json
+packages/**/tsconfig.tsbuildinfo
 src/**
 docs/**
+examples/**
 .gitignore
 .yarnrc
 esbuild.js
@@ -21,6 +24,9 @@ vsc-extension-quickstart.md
 **/*.tsx
 **/.vscode-test.*
 .devbox/**
+.local/**
+.claude/**
+.github/**
 pnpm-lock.yaml
 pnpm-workspace.yaml
 devbox.json

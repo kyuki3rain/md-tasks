@@ -29,6 +29,11 @@ export function MarkdownText({ children }: MarkdownTextProps) {
 	const handleLinkKeyDown = useCallback((e: KeyboardEvent) => {
 		if (e.key === 'Enter' || e.key === ' ') {
 			e.stopPropagation();
+			// Spaceキーのデフォルト動作（スクロール）を防止
+			// Enterはリンクのデフォルト動作（遷移）を維持
+			if (e.key === ' ') {
+				e.preventDefault();
+			}
 		}
 	}, []);
 

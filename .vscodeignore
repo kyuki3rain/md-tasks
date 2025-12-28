@@ -20,6 +20,7 @@ vsc-extension-quickstart.md
 **/*.ts
 **/*.tsx
 **/.vscode-test.*
+.devbox/**
 pnpm-lock.yaml
 pnpm-workspace.yaml
 devbox.json

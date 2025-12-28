@@ -161,9 +161,12 @@ describe('extension', () => {
 
 		it('activateされていない場合もエラーにならない', async () => {
 			const extension = await import('./extension');
+			mockDispose.mockClear();
 
 			// deactivateを直接呼び出してもエラーにならないことを確認
 			expect(() => extension.deactivate()).not.toThrow();
+			// activateされていないのでdisposeは呼ばれない
+			expect(mockDispose).not.toHaveBeenCalled();
 		});
 	});
 });

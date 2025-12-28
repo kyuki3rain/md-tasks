@@ -360,7 +360,7 @@ describe('KanbanPanelProvider', () => {
 			});
 		});
 
-		it('タスク取得失敗時、何も送信しない', async () => {
+		it('タスク取得失敗時、TASKS_UPDATEDは送信せずDOCUMENT_STATE_CHANGEDのみ送信する', async () => {
 			mockContainer.getTaskController = vi.fn(() => ({
 				getTasks: vi.fn().mockResolvedValue({ isOk: () => false, error: new Error('Failed') }),
 			})) as unknown as typeof mockContainer.getTaskController;
@@ -378,10 +378,15 @@ describe('KanbanPanelProvider', () => {
 			};
 			await activeEditorChangeCallback?.(mockEditor);
 
-			// TASKS_UPDATEDは送信されない（DOCUMENT_STATE_CHANGEDのみ送信される）
+			// TASKS_UPDATEDは送信されない
 			expect(mockWebview.postMessage).not.toHaveBeenCalledWith(
 				expect.objectContaining({ type: 'TASKS_UPDATED' }),
 			);
+			// DOCUMENT_STATE_CHANGEDは送信される
+			expect(mockWebview.postMessage).toHaveBeenCalledWith({
+				type: 'DOCUMENT_STATE_CHANGED',
+				payload: { isDirty: false },
+			});
 		});
 	});
 

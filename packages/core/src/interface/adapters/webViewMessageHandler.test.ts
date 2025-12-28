@@ -336,11 +336,16 @@ describe('WebViewMessageHandler', () => {
 		});
 
 		describe('unknown message type', () => {
-			it('不明なメッセージタイプの場合、例外を発生させずに処理を完了する', async () => {
+			it('不明なメッセージタイプの場合、エラーログを出力して処理を完了する', async () => {
+				const { logger } = await import('../../shared/logger');
+				const loggerSpy = vi.spyOn(logger, 'error');
+
 				const message = { type: 'UNKNOWN_TYPE' } as unknown as WebViewToExtensionMessage;
 
-				// エラーにならずに処理が完了することを確認
 				await expect(handler.handleMessage(message)).resolves.not.toThrow();
+				expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('Unknown message type'));
+
+				loggerSpy.mockRestore();
 			});
 		});
 	});

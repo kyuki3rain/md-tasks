@@ -13,13 +13,13 @@ import type {
 	ParseResult,
 	SerializerError,
 } from '../clients/markdownTaskClient';
+import { MarkdownParseError } from '../clients/markdownTaskClient';
 import type { VscodeDocumentClient } from '../clients/vscodeDocumentClient';
 import {
 	DocumentEditError,
 	DocumentNotFoundError,
 	NoActiveEditorError,
 } from '../clients/vscodeDocumentClient';
-import { MarkdownParseError } from '../clients/markdownTaskClient';
 import { MarkdownTaskRepository } from './markdownTaskRepository';
 
 // テスト用ヘルパー: 確実に成功するステータスを作成

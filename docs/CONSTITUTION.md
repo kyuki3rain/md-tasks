@@ -1,4 +1,4 @@
-# Markdown Kanban - 技術原則（Constitution）
+# MD Tasks - 技術原則（Constitution）
 
 このドキュメントは、プロジェクト全体を通じて守るべき不変の原則を定義する。
 

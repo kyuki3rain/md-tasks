@@ -8,7 +8,7 @@ import type { Container } from '../di/container';
  * カンバンボードのWebViewパネルを管理する
  */
 export class KanbanPanelProvider {
-	public static readonly viewType = 'markdownKanban.kanbanBoard';
+	public static readonly viewType = 'mdTasks.kanbanBoard';
 
 	private panel: vscode.WebviewPanel | undefined;
 	private readonly extensionUri: vscode.Uri;

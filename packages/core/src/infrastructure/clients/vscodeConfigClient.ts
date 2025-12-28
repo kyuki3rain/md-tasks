@@ -13,7 +13,7 @@ export interface VscodeConfigDeps {
  * VSCode設定APIのラッパー
  */
 export class VscodeConfigClient {
-	private static readonly CONFIG_SECTION = 'markdownKanban';
+	private static readonly CONFIG_SECTION = 'mdTasks';
 
 	constructor(private readonly deps: VscodeConfigDeps) {}
 

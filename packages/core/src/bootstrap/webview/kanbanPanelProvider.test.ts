@@ -86,7 +86,7 @@ describe('KanbanPanelProvider', () => {
 
 	describe('viewType', () => {
 		it('正しいviewTypeが定義されている', () => {
-			expect(KanbanPanelProvider.viewType).toBe('markdownKanban.kanbanBoard');
+			expect(KanbanPanelProvider.viewType).toBe('mdTasks.kanbanBoard');
 		});
 	});
 
@@ -97,7 +97,7 @@ describe('KanbanPanelProvider', () => {
 			provider.showOrCreate();
 
 			expect(vscode.window.createWebviewPanel).toHaveBeenCalledWith(
-				'markdownKanban.kanbanBoard',
+				'mdTasks.kanbanBoard',
 				'Kanban Board',
 				2, // ViewColumn.Beside
 				expect.any(Object),

@@ -6,7 +6,7 @@
   ],
   "shell": {
     "init_hook": [
-      "echo 'Markdown Kanban development environment ready!' > /dev/null"
+      "echo 'MD Tasks development environment ready!' > /dev/null"
     ],
     "scripts": {
       "setup": "pnpm install",

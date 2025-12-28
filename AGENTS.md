@@ -6,7 +6,7 @@
 
 ## プロジェクト概要
 
-**Markdown Kanban** は、Markdownファイル内のTODOリスト（チェックボックス）をカンバンボード形式で表示・操作できるVSCode拡張機能。
+**MD Tasks** は、Markdownファイル内のTODOリスト（チェックボックス）をカンバンボード形式で表示・操作できるVSCode拡張機能。
 
 ### 主な特徴
 
@@ -131,9 +131,9 @@ pnpm run compile
 pnpm workspaceを使った2パッケージ構成。クリーンアーキテクチャを採用し、依存関係は内側から外側への一方向のみ許可。
 
 ```
-markdown-kanban/
+md-tasks/
 ├── packages/
-│   ├── core/              # Extension本体（@markdown-kanban/core）
+│   ├── core/              # Extension本体（@md-tasks/core）
 │   │   ├── src/
 │   │   │   ├── domain/           # ドメイン層（ビジネスルールの中核）
 │   │   │   │   └── ports/        # Port（インターフェース定義）
@@ -149,7 +149,7 @@ markdown-kanban/
 │   │   │   └── shared/           # 共有ユーティリティ
 │   │   ├── package.json
 │   │   └── tsconfig.json
-│   └── webview/           # WebView（@markdown-kanban/webview）
+│   └── webview/           # WebView（@md-tasks/webview）
 │       ├── src/
 │       ├── package.json
 │       └── vite.config.ts
@@ -197,79 +197,6 @@ markdown-kanban/
 | Interface層 | info, error | 主要な処理の記録、エラー発生時 |
 | Application層 | debug | ユースケース入口/出口 |
 | Infrastructure層 | debug | ポート入口/出口 |
-
----
-
-## 現在のステータス
-
-- **バージョン**: 0.0.1（開発中）
-- **状態**: Phase 9（設定機能の実装）完了
-- **次のステップ**: Phase 10（統合とテスト）へ
-
-### 完了済みフェーズ
-
-- ✅ Phase 1: 基盤構築
-  - 開発環境セットアップ（devbox, pnpm, Biome, Vitest, TypeScript strict mode）
-  - プロジェクト構造整備（クリーンアーキテクチャ）
-  - 共有ユーティリティ（Logger, neverthrow, Zod）
-  - WebView環境構築（Vite, React, Tailwind CSS v4, shadcn/ui）
-
-- ✅ Phase 2: ドメイン層の実装
-  - 値オブジェクト: Status, Path
-  - エンティティ: Task
-  - ドメインエラー: InvalidStatusError, TaskParseError, TaskNotFoundError
-  - ポート: TaskRepository, ConfigProvider
-  - 57件のユニットテスト
-
-- ✅ Phase 3: Markdownパーサーの実装
-  - RemarkClient: remark/gray-matterのラッパー
-  - MarkdownTaskClient: Markdownパース・シリアライズ（RemarkClientを使用）
-  - チェックボックス認識、見出し階層解析、メタデータ抽出
-  - タスクの更新・作成・削除（部分編集、元の書式を保持）
-  - フロントマターからの設定読み込み
-  - タスクID生成・重複検出
-  - 48件の統合テスト
-
-- ✅ Phase 4: アプリケーション層の実装
-  - GetTasksUseCase: タスク一覧取得
-  - CreateTaskUseCase: タスク作成
-  - UpdateTaskUseCase: タスク更新
-  - DeleteTaskUseCase: タスク削除
-  - ChangeTaskStatusUseCase: ステータス変更（チェックボックス連動）
-  - GetConfigUseCase: 設定取得
-  - 25件のユニットテスト（計133件）
-
-- ✅ Phase 5: インフラストラクチャ層の実装
-  - VscodeDocumentClient: VSCodeドキュメント操作（WorkspaceEdit API含む）
-  - VscodeConfigClient: VSCode設定APIのラッパー
-  - MarkdownTaskRepository: TaskRepositoryの実装
-  - VscodeConfigProvider: ConfigProviderの実装（VSCode設定）
-  - FrontmatterConfigProvider: ConfigProviderの実装（フロントマター）
-  - 38件のユニットテスト（計171件）
-
-- ✅ Phase 6: インターフェース層の実装
-  - WebViewMessageClient: WebViewへのメッセージ送受信
-  - TaskController: タスク操作のエントリーポイント
-  - ConfigController: 設定操作のエントリーポイント
-  - WebViewMessageHandler: WebViewからのメッセージハンドリング
-  - メッセージ型定義（Extension ⇔ WebView間の通信プロトコル）
-  - 35件のユニットテスト（計206件）
-
-- ✅ Phase 7: WebView UIの実装
-  - KanbanBoard, Column, TaskCard, TaskModal, PathBadge コンポーネント
-  - @dnd-kit/coreによるドラッグ&ドロップ実装
-  - useVscodeApi, useKanban カスタムフック
-
-- ✅ Phase 8: ブートストラップ層の実装
-  - DIコンテナの構築
-  - KanbanPanelProvider（WebViewパネル管理）
-  - コマンド登録とイベントリスナー
-  - 14件のユニットテスト（計220件）
-
-- ✅ Phase 9: 設定機能の実装
-  - VSCode設定スキーマ（package.jsonにconfiguration追加）
-  - 設定解決ロジック（フロントマター → VSCode設定 → デフォルト）
-  - 5件のユニットテスト（計225件）
 
 ---
 

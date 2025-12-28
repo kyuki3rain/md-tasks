@@ -1,12 +1,12 @@
 {
-  "name": "markdown-kanban",
-  "displayName": "Markdown Kanban",
+  "name": "md-tasks",
+  "displayName": "MD Tasks",
   "description": "View and manage TODO lists in Markdown files as a Kanban board",
   "version": "0.1.0",
   "publisher": "kyuki3rain",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kyuki3rain/markdown-kanban.git"
+    "url": "https://github.com/kyuki3rain/md-tasks.git"
   },
   "engines": {
     "vscode": "^1.107.0"
@@ -21,15 +21,15 @@
   "contributes": {
     "commands": [
       {
-        "command": "markdownKanban.openBoard",
+        "command": "mdTasks.openBoard",
         "title": "Open Kanban Board",
-        "category": "Markdown Kanban",
+        "category": "MD Tasks",
         "icon": "$(layout)"
       },
       {
-        "command": "markdownKanban.openBoardFromEditor",
+        "command": "mdTasks.openBoardFromEditor",
         "title": "Open Kanban Board",
-        "category": "Markdown Kanban",
+        "category": "MD Tasks",
         "icon": "$(layout)"
       }
     ],
@@ -37,25 +37,25 @@
       "editor/title": [
         {
           "when": "resourceLangId == markdown",
-          "command": "markdownKanban.openBoardFromEditor",
+          "command": "mdTasks.openBoardFromEditor",
           "group": "navigation"
         }
       ],
       "commandPalette": [
         {
-          "command": "markdownKanban.openBoard",
+          "command": "mdTasks.openBoard",
           "when": "resourceLangId == markdown"
         },
         {
-          "command": "markdownKanban.openBoardFromEditor",
+          "command": "mdTasks.openBoardFromEditor",
           "when": "false"
         }
       ]
     },
     "configuration": {
-      "title": "Markdown Kanban",
+      "title": "MD Tasks",
       "properties": {
-        "markdownKanban.statuses": {
+        "mdTasks.statuses": {
           "type": "array",
           "items": {
             "type": "string"
@@ -63,7 +63,7 @@
           "default": ["todo", "in-progress", "done"],
           "description": "ステータス一覧（カラムの表示順）"
         },
-        "markdownKanban.doneStatuses": {
+        "mdTasks.doneStatuses": {
           "type": "array",
           "items": {
             "type": "string"
@@ -71,17 +71,17 @@
           "default": ["done"],
           "description": "完了扱いとするステータス"
         },
-        "markdownKanban.defaultStatus": {
+        "mdTasks.defaultStatus": {
           "type": "string",
           "default": "todo",
           "description": "デフォルトステータス（[ ] の時、status未指定時に使用）"
         },
-        "markdownKanban.defaultDoneStatus": {
+        "mdTasks.defaultDoneStatus": {
           "type": "string",
           "default": "done",
           "description": "デフォルト完了ステータス（[x] の時、status未指定時に使用）"
         },
-        "markdownKanban.sortBy": {
+        "mdTasks.sortBy": {
           "type": "string",
           "enum": ["markdown", "priority", "due", "alphabetical"],
           "default": "markdown",
@@ -93,7 +93,7 @@
           ],
           "description": "タスクのソート順"
         },
-        "markdownKanban.syncCheckboxWithDone": {
+        "mdTasks.syncCheckboxWithDone": {
           "type": "boolean",
           "default": true,
           "description": "完了ステータス変更時にチェックボックスも連動させるか"
@@ -103,25 +103,25 @@
   },
   "scripts": {
     "vscode:prepublish": "pnpm run package",
-    "compile": "pnpm --filter @markdown-kanban/core run compile && pnpm --filter @markdown-kanban/webview run build",
-    "compile:core": "pnpm --filter @markdown-kanban/core run compile",
-    "compile:webview": "pnpm --filter @markdown-kanban/webview run build",
+    "compile": "pnpm --filter @md-tasks/core run compile && pnpm --filter @md-tasks/webview run build",
+    "compile:core": "pnpm --filter @md-tasks/core run compile",
+    "compile:webview": "pnpm --filter @md-tasks/webview run build",
     "watch": "npm-run-all -p watch:*",
     "watch:esbuild": "node packages/core/esbuild.js --watch",
-    "watch:tsc": "pnpm --filter @markdown-kanban/core run check-types:watch",
-    "watch:webview": "pnpm --filter @markdown-kanban/webview run watch",
-    "package": "pnpm --filter @markdown-kanban/core run check-types && pnpm --filter @markdown-kanban/core run lint && node packages/core/esbuild.js --production && pnpm --filter @markdown-kanban/webview run build",
+    "watch:tsc": "pnpm --filter @md-tasks/core run check-types:watch",
+    "watch:webview": "pnpm --filter @md-tasks/webview run watch",
+    "package": "pnpm --filter @md-tasks/core run check-types && pnpm --filter @md-tasks/core run lint && node packages/core/esbuild.js --production && pnpm --filter @md-tasks/webview run build",
     "compile-tests": "node packages/core/esbuild.e2e.js",
     "watch-tests": "node packages/core/esbuild.e2e.js --watch",
-    "pretest": "pnpm --filter @markdown-kanban/core run check-types && pnpm --filter @markdown-kanban/core run lint",
+    "pretest": "pnpm --filter @md-tasks/core run check-types && pnpm --filter @md-tasks/core run lint",
     "pretest:e2e": "pnpm run compile-tests && pnpm run compile",
-    "check-types": "pnpm --filter @markdown-kanban/core run check-types",
-    "lint": "pnpm --filter @markdown-kanban/core run lint",
-    "lint:fix": "pnpm --filter @markdown-kanban/core run lint:fix",
-    "format": "pnpm --filter @markdown-kanban/core run format",
-    "test": "pnpm --filter @markdown-kanban/core run test",
-    "test:watch": "pnpm --filter @markdown-kanban/core run test:watch",
-    "test:coverage": "pnpm --filter @markdown-kanban/core run test:coverage",
+    "check-types": "pnpm --filter @md-tasks/core run check-types",
+    "lint": "pnpm --filter @md-tasks/core run lint",
+    "lint:fix": "pnpm --filter @md-tasks/core run lint:fix",
+    "format": "pnpm --filter @md-tasks/core run format",
+    "test": "pnpm --filter @md-tasks/core run test",
+    "test:watch": "pnpm --filter @md-tasks/core run test:watch",
+    "test:coverage": "pnpm --filter @md-tasks/core run test:coverage",
     "test:e2e": "pnpm run pretest:e2e && vscode-test"
   },
   "devDependencies": {

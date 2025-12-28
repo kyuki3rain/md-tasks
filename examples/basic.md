@@ -1,4 +1,4 @@
-# Markdown Kanban - Basic Example
+# MD Tasks - Basic Example
 
 This is a simple example to test basic kanban functionality.
 

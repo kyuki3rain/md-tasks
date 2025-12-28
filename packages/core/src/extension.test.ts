@@ -81,26 +81,26 @@ describe('extension', () => {
 			expect(KanbanPanelProvider).toHaveBeenCalledWith(mockContext.extensionUri, expect.anything());
 		});
 
-		it('markdownKanban.openBoardコマンドを登録する', async () => {
+		it('mdTasks.openBoardコマンドを登録する', async () => {
 			const vscode = await import('vscode');
 			const extension = await import('./extension');
 
 			extension.activate(mockContext as never);
 
 			expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-				'markdownKanban.openBoard',
+				'mdTasks.openBoard',
 				expect.any(Function),
 			);
 		});
 
-		it('markdownKanban.openBoardFromEditorコマンドを登録する', async () => {
+		it('mdTasks.openBoardFromEditorコマンドを登録する', async () => {
 			const vscode = await import('vscode');
 			const extension = await import('./extension');
 
 			extension.activate(mockContext as never);
 
 			expect(vscode.commands.registerCommand).toHaveBeenCalledWith(
-				'markdownKanban.openBoardFromEditor',
+				'mdTasks.openBoardFromEditor',
 				expect.any(Function),
 			);
 		});
@@ -118,7 +118,7 @@ describe('extension', () => {
 
 			extension.activate(mockContext as never);
 
-			const openBoardCallback = registeredCommands.get('markdownKanban.openBoard');
+			const openBoardCallback = registeredCommands.get('mdTasks.openBoard');
 			expect(openBoardCallback).toBeDefined();
 
 			openBoardCallback?.();
@@ -131,7 +131,7 @@ describe('extension', () => {
 
 			extension.activate(mockContext as never);
 
-			const openBoardCallback = registeredCommands.get('markdownKanban.openBoardFromEditor');
+			const openBoardCallback = registeredCommands.get('mdTasks.openBoardFromEditor');
 			expect(openBoardCallback).toBeDefined();
 
 			openBoardCallback?.();

@@ -1,4 +1,4 @@
-# Markdown Kanban - Markdown Styling Example
+# MD Tasks - Markdown Styling Example
 
 This example demonstrates Markdown rendering in task titles.
 

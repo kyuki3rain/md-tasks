@@ -1,6 +1,6 @@
 # MVP実装計画（v0.1.0）
 
-このドキュメントは、Markdown Kanban v0.1.0（MVP）を達成するための実装計画を定義する。
+このドキュメントは、MD Tasks v0.1.0（MVP）を達成するための実装計画を定義する。
 
 ---
 
@@ -259,7 +259,7 @@ src/
 
 #### 8.3 コマンド登録
 
-- [x] `markdownKanban.openBoard` コマンドの登録
+- [x] `mdTasks.openBoard` コマンドの登録
 - [x] エディタ右上のアクションボタン設定
 
 #### 8.4 WebViewパネル

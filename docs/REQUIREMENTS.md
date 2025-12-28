@@ -1,4 +1,4 @@
-# Markdown Kanban - 要件定義書
+# MD Tasks - 要件定義書
 
 ## 概要
 
@@ -140,25 +140,25 @@ kanban:
 // .vscode/settings.json
 {
   // ステータス一覧（カラムの表示順）
-  "markdownKanban.statuses": ["todo", "in-progress", "done"],
+  "mdTasks.statuses": ["todo", "in-progress", "done"],
   
   // 完了扱いとするステータス
-  "markdownKanban.doneStatuses": ["done"],
+  "mdTasks.doneStatuses": ["done"],
   
   // デフォルトステータス（[ ] の時、status未指定時に使用）
-  "markdownKanban.defaultStatus": "todo",
+  "mdTasks.defaultStatus": "todo",
   
   // デフォルト完了ステータス（[x] の時、status未指定時に使用）
-  "markdownKanban.defaultDoneStatus": "done",
+  "mdTasks.defaultDoneStatus": "done",
   
   // ソート順
-  "markdownKanban.sortBy": "markdown",  // "markdown" | "priority" | "due" | "alphabetical"
+  "mdTasks.sortBy": "markdown",  // "markdown" | "priority" | "due" | "alphabetical"
   
   // Done時にチェックボックスも連動させるか
-  "markdownKanban.syncCheckboxWithDone": true,
+  "mdTasks.syncCheckboxWithDone": true,
   
   // 新規タスク追加時の挿入位置（将来）
-  "markdownKanban.newTaskPosition": "endOfFile"  // or "afterHeading:## タスクリスト"
+  "mdTasks.newTaskPosition": "endOfFile"  // or "afterHeading:## タスクリスト"
 }
 ```
 
@@ -407,7 +407,7 @@ ID = パス::タイトル
 
 ```jsonc
 {
-  "markdownKanban.newTaskPosition": "afterHeading:## タスクリスト"
+  "mdTasks.newTaskPosition": "afterHeading:## タスクリスト"
 }
 ```
 
@@ -422,8 +422,8 @@ ID = パス::タイトル
 
 | 項目 | 値 |
 |------|-----|
-| 表示名 | Markdown Kanban |
-| ID | markdown-kanban |
+| 表示名 | MD Tasks |
+| ID | md-tasks |
 | 対象 | VSCode |
 
 ---

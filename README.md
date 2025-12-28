@@ -1,4 +1,4 @@
-# Markdown Kanban
+# MD Tasks
 
 MarkdownファイルのTODOリスト（チェックボックス）をカンバンボード形式で表示・操作できるVSCode拡張機能です。
 
@@ -16,11 +16,11 @@ MarkdownファイルのTODOリスト（チェックボックス）をカンバ�
 
 ### マーケットプレイスから
 
-VSCode拡張機能マーケットプレイスで「Markdown Kanban」を検索してインストール。
+VSCode拡張機能マーケットプレイスで「MD Tasks」を検索してインストール。
 
 ### VSIXファイルから
 
-1. [Releases](https://github.com/kyuki3rain/markdown-kanban/releases)からVSIXファイルをダウンロード
+1. [Releases](https://github.com/kyuki3rain/md-tasks/releases)からVSIXファイルをダウンロード
 2. VSCodeで `Ctrl+Shift+P` → `Extensions: Install from VSIX...`
 3. ダウンロードしたVSIXファイルを選択
 
@@ -108,12 +108,12 @@ kanban:
 
 | 設定項目 | 説明 | デフォルト |
 |---------|------|-----------|
-| `markdownKanban.statuses` | ステータス一覧（カラムの表示順） | `["todo", "in-progress", "done"]` |
-| `markdownKanban.doneStatuses` | 完了扱いとするステータス | `["done"]` |
-| `markdownKanban.defaultStatus` | デフォルトステータス（`[ ]` の時） | `"todo"` |
-| `markdownKanban.defaultDoneStatus` | デフォルト完了ステータス（`[x]` の時） | `"done"` |
-| `markdownKanban.sortBy` | タスクのソート順 | `"markdown"` |
-| `markdownKanban.syncCheckboxWithDone` | 完了ステータス変更時にチェックボックスも連動 | `true` |
+| `mdTasks.statuses` | ステータス一覧（カラムの表示順） | `["todo", "in-progress", "done"]` |
+| `mdTasks.doneStatuses` | 完了扱いとするステータス | `["done"]` |
+| `mdTasks.defaultStatus` | デフォルトステータス（`[ ]` の時） | `"todo"` |
+| `mdTasks.defaultDoneStatus` | デフォルト完了ステータス（`[x]` の時） | `"done"` |
+| `mdTasks.sortBy` | タスクのソート順 | `"markdown"` |
+| `mdTasks.syncCheckboxWithDone` | 完了ステータス変更時にチェックボックスも連動 | `true` |
 
 #### ソート順オプション
 
@@ -127,9 +127,9 @@ kanban:
 ```jsonc
 // .vscode/settings.json
 {
-  "markdownKanban.statuses": ["backlog", "todo", "in-progress", "review", "done"],
-  "markdownKanban.doneStatuses": ["done"],
-  "markdownKanban.sortBy": "priority"
+  "mdTasks.statuses": ["backlog", "todo", "in-progress", "review", "done"],
+  "mdTasks.doneStatuses": ["done"],
+  "mdTasks.sortBy": "priority"
 }
 ```
 

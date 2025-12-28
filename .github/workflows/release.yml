@@ -48,7 +48,7 @@ jobs:
           gh release create "${{ github.ref_name }}" \
             --title "Release ${{ github.ref_name }}" \
             --generate-notes \
-            ./markdown-kanban-${{ steps.version.outputs.version }}.vsix
+            ./md-tasks-${{ steps.version.outputs.version }}.vsix
 
       - name: Publish to VS Code Marketplace
         if: ${{ secrets.VSCE_PAT != '' }}

@@ -32,7 +32,7 @@
       "label": "watch:core:tsc",
       "type": "shell",
       "command": "devbox",
-      "args": ["run", "--", "pnpm", "--filter", "@markdown-kanban/core", "run", "check-types:watch"],
+      "args": ["run", "--", "pnpm", "--filter", "@md-tasks/core", "run", "check-types:watch"],
       "group": "build",
       "problemMatcher": "$tsc-watch",
       "isBackground": true,
@@ -42,7 +42,7 @@
       "label": "watch:webview",
       "type": "shell",
       "command": "devbox",
-      "args": ["run", "--", "pnpm", "--filter", "@markdown-kanban/webview", "run", "watch"],
+      "args": ["run", "--", "pnpm", "--filter", "@md-tasks/webview", "run", "watch"],
       "group": "build",
       "problemMatcher": {
         "owner": "vite",

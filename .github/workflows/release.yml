@@ -49,3 +49,8 @@ jobs:
             --title "Release ${{ github.ref_name }}" \
             --generate-notes \
             ./markdown-kanban-${{ steps.version.outputs.version }}.vsix
+
+      - name: Publish to VS Code Marketplace
+        run: pnpm vsce publish --no-dependencies
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}

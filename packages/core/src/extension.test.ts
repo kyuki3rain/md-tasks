@@ -43,6 +43,7 @@ describe('extension', () => {
 	};
 
 	beforeEach(async () => {
+		vi.resetModules();
 		vi.clearAllMocks();
 		registeredCommands = new Map();
 

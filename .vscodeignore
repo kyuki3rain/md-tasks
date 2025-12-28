@@ -3,10 +3,7 @@
 out/**
 node_modules/**
 **/node_modules/**
-packages/**/src/**
-packages/**/coverage/**
-packages/**/package.json
-packages/**/tsconfig.tsbuildinfo
+packages/**
 src/**
 docs/**
 examples/**

@@ -39,3 +39,9 @@ jobs:
 
       - name: Compile
         run: pnpm run compile
+
+      - name: Compile E2E tests
+        run: pnpm run compile-tests
+
+      - name: Run E2E tests
+        run: xvfb-run -a pnpm --filter @md-tasks/core exec vscode-test

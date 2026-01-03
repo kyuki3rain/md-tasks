@@ -43,5 +43,11 @@ jobs:
       - name: Compile E2E tests
         run: pnpm run compile-tests
 
+      - name: Cache VSCode test installation
+        uses: actions/cache@v4
+        with:
+          path: packages/core/.vscode-test
+          key: vscode-test-${{ runner.os }}-${{ hashFiles('packages/core/.vscode-test.mjs') }}
+
       - name: Run E2E tests
         run: xvfb-run -a pnpm --filter @md-tasks/core exec vscode-test
